@@ -35,6 +35,7 @@ const contents = [
   ["about.missionTitle", "about", "បេសកកម្ម", ContentType.TEXT],
   ["about.mission", "about", "ផ្តល់ការបង្រៀនច្បាស់លាស់ ជិតស្និទ្ធ និងសមស្របតាមកម្រិតរបស់សិស្សម្នាក់ៗ។", ContentType.TEXT],
   ["about.long", "about", "យើងជឿថា សិស្សគ្រប់រូបអាចពូកែបាន ប្រសិនបើទទួលបានការណែនាំត្រឹមត្រូវ។ DR.MATHS រៀបចំមេរៀនជាជំហានៗ ដើម្បីឱ្យការយល់ដឹងក្លាយជាទំនុកចិត្ត។", ContentType.RICH_TEXT],
+  ["about.imageDriveUrl", "about", "", ContentType.IMAGE],
   ["subjects.eyebrow", "subjects", "មុខវិជ្ជាដែលយើងបង្រៀន", ContentType.TEXT],
   ["subjects.title", "subjects", "សិក្សាតាមជំនាញដែលអ្នកត្រូវការ", ContentType.TEXT],
   ["formats.eyebrow", "formats", "បត់បែនតាមអ្នក", ContentType.TEXT],

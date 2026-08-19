@@ -98,6 +98,7 @@ section[id] { scroll-margin-top: 5.25rem; }
 .info-card p { color: var(--muted); margin: 0; }
 .about-long { padding: 2rem; background: var(--ink); color: #fff; border-radius: 18px; }
 .about-long p { color: rgba(255,255,255,.75); }
+.about-photo { width: 100%; aspect-ratio: 3/2; object-fit: cover; border-radius: 12px; margin: 1rem 0; display: block; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 12px 30px rgba(0,0,0,.3); }
 
 .subject-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
 .subject-card { position: relative; background: #fff; padding: 1.45rem; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform 180ms cubic-bezier(.23,1,.32,1), box-shadow 180ms ease; }

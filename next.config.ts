@@ -12,7 +12,7 @@ const securityHeaders = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://i.ytimg.com https://yt3.googleusercontent.com https://drive.google.com",
+      "img-src 'self' data: blob: https://i.ytimg.com https://yt3.googleusercontent.com https://drive.google.com https://lh3.googleusercontent.com",
       "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://drive.google.com",
       "connect-src 'self'",
       "font-src 'self' data:",

@@ -30,6 +30,7 @@ function external(url: string | null | undefined) {
 export default async function Home() {
   const { content, settings, subjects, testimonials, videos } = await getSiteData();
   const heroImage = getDriveImage(content["hero.imageDriveUrl"] ?? "");
+  const aboutImage = getDriveImage(content["about.imageDriveUrl"] ?? "");
   const featured = videos.find((video) => video.featured) ?? videos[0];
   const formats = [1, 2, 3].map((number) => ({
     number: `0${number}`,
@@ -60,7 +61,7 @@ export default async function Home() {
       <header className="nav">
         <div className="container nav-inner">
           <a className="brand" href="#home" aria-label="DR.MATHS ទំព័រដើម">
-            <img src={settings.logoRenderUrl ?? "/logo.jpg"} alt={settings.logoAlt ?? "DR.MATHS"} width="38" height="38" style={{ objectFit: "contain", borderRadius: 8 }} />
+            <img src={settings.logoRenderUrl ?? "/logo.jpg"} alt={settings.logoAlt ?? "DR.MATHS"} width="38" height="38" style={{ objectFit: "contain", borderRadius: 8 }} referrerPolicy="no-referrer" />
             <span>DR.MATHS</span>
           </a>
           <NavMenu
@@ -91,7 +92,7 @@ export default async function Home() {
           </div>
           <div className="hero-art" aria-label="ផ្ទាំងរូបភាព DR.MATHS">
             <div className="hero-poster">
-              <img src={heroImage?.renderUrl ?? "/images/Photo-A.jpg"} alt={heroImage ? "រូបភាពសកម្មភាពសិក្សា DR.MATHS" : "ផ្ទាំងរូបភាព DR.MATHS"} />
+              <img src={heroImage?.renderUrl ?? "/images/Photo-A.jpg"} alt={heroImage ? "រូបភាពសកម្មភាពសិក្សា DR.MATHS" : "ផ្ទាំងរូបភាព DR.MATHS"} referrerPolicy="no-referrer" />
               <div className="hero-poster-chip" aria-hidden="true">
                 <span className="chalk-equation">x² + y² = ?</span>
                 <span className="chalk-note">គិត • យល់ • ជឿជាក់</span>
@@ -116,7 +117,11 @@ export default async function Home() {
               <article className="info-card"><h3>{content["about.visionTitle"]}</h3><p>{content["about.vision"]}</p></article>
               <article className="info-card"><h3>{content["about.missionTitle"]}</h3><p>{content["about.mission"]}</p></article>
             </div>
-            <article className="about-long"><Sparkles color="#FFB703" size={25} aria-hidden="true" /><p>{plain(content["about.long"])}</p></article>
+            <article className="about-long">
+              <Sparkles color="#FFB703" size={25} aria-hidden="true" />
+              <img className="about-photo" src={aboutImage?.renderUrl ?? "/images/A-2025_only.jpg"} alt={aboutImage ? "រូបភាពសកម្មភាពសិក្សា DR.MATHS" : "រូបភាព DR.MATHS"} loading="lazy" referrerPolicy="no-referrer" />
+              <p>{plain(content["about.long"])}</p>
+            </article>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { unstable_noStore as noStore } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDbRetry } from "@/lib/prisma";
 
 export type ContentMap = Record<string, string>;
 
@@ -36,6 +36,7 @@ export const fallbackContent: ContentMap = {
   "about.missionTitle": "បេសកកម្ម",
   "about.mission": "ផ្តល់ការបង្រៀនច្បាស់លាស់ ជិតស្និទ្ធ និងសមស្របតាមកម្រិតរបស់សិស្សម្នាក់ៗ។",
   "about.long": "យើងជឿថា សិស្សគ្រប់រូបអាចពូកែបាន ប្រសិនបើទទួលបានការណែនាំត្រឹមត្រូវ។ DR.MATHS រៀបចំមេរៀនជាជំហានៗ ដើម្បីឱ្យការយល់ដឹងក្លាយជាទំនុកចិត្ត។",
+  "about.imageDriveUrl": "",
   "subjects.eyebrow": "មុខវិជ្ជាដែលយើងបង្រៀន",
   "subjects.title": "សិក្សាតាមជំនាញដែលអ្នកត្រូវការ",
   "formats.eyebrow": "បត់បែនតាមអ្នក",
@@ -132,12 +133,14 @@ export const getSiteData = cache(async function getSiteData() {
 
 export async function getAdminData() {
   noStore();
-  const [contents, settings, subjects, testimonials, videos] = await Promise.all([
-    prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
-    prisma.settings.findUnique({ where: { id: "site-settings" } }),
-    prisma.subject.findMany({ orderBy: { order: "asc" } }),
-    prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
-    prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
-  ]);
-  return { contents, settings, subjects, testimonials, videos };
+  return withDbRetry(async () => {
+    const [contents, settings, subjects, testimonials, videos] = await Promise.all([
+      prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
+      prisma.settings.findUnique({ where: { id: "site-settings" } }),
+      prisma.subject.findMany({ orderBy: { order: "asc" } }),
+      prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
+      prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
+    ]);
+    return { contents, settings, subjects, testimonials, videos };
+  });
 }

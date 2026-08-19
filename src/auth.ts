@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import authConfig from "@/auth.config";
-import { prisma } from "@/lib/prisma";
+import { prisma, withDbRetry } from "@/lib/prisma";
 
 // Best-effort in-memory brute-force protection. Reset whenever the process
 // restarts (e.g. a fresh serverless instance), so it is a deterrent, not a guarantee.
@@ -70,9 +70,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const admin = await prisma.adminUser.findUnique({
-            where: { email },
-          });
+          const admin = await withDbRetry(() =>
+            prisma.adminUser.findUnique({
+              where: { email },
+            }),
+          );
           if (!admin) {
             // Equalize timing with the password-mismatch path.
             await bcrypt.compare(parsed.data.password, DUMMY_HASH);
