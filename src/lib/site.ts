@@ -133,14 +133,19 @@ export const getSiteData = cache(async function getSiteData() {
 
 export async function getAdminData() {
   noStore();
-  return withDbRetry(async () => {
-    const [contents, settings, subjects, testimonials, videos] = await Promise.all([
-      prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
-      prisma.settings.findUnique({ where: { id: "site-settings" } }),
-      prisma.subject.findMany({ orderBy: { order: "asc" } }),
-      prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
-      prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
-    ]);
-    return { contents, settings, subjects, testimonials, videos };
-  });
+  try {
+    return await withDbRetry(async () => {
+      const [contents, settings, subjects, testimonials, videos] = await Promise.all([
+        prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
+        prisma.settings.findUnique({ where: { id: "site-settings" } }),
+        prisma.subject.findMany({ orderBy: { order: "asc" } }),
+        prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
+        prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
+      ]);
+      return { contents, settings, subjects, testimonials, videos };
+    });
+  } catch (error) {
+    console.error("[getAdminData] database error, using fallbacks:", error);
+    return { contents: [], settings: null, subjects: [], testimonials: [], videos: [] };
+  }
 }
