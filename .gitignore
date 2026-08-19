@@ -1,0 +1,6 @@
+node_modules/
+.next/
+
+# env files contain secrets (DB password, AUTH_SECRET) — never commit
+.env
+.env.*
