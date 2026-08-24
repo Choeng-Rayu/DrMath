@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 
-export type NavLink = { href: string; label: string };
+export type NavLink = { href: string; label: string; cmsKey?: string };
 
 function external(url: string) {
   return url.startsWith("http") ? { target: "_blank" as const, rel: "noreferrer" } : {};
@@ -40,7 +40,7 @@ export function NavMenu({ links, ctaLabel, ctaHref }: { links: NavLink[]; ctaLab
     <>
       <nav className="nav-links" aria-label="ម៉ឺនុយសំខាន់">
         {links.map((link) => (
-          <a key={link.href} href={link.href}>{link.label}</a>
+          <a key={link.href} href={link.href} data-cms-key={link.cmsKey}>{link.label}</a>
         ))}
       </nav>
       <div className="nav-toggle" ref={rootRef}>

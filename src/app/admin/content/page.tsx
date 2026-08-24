@@ -1,5 +1,6 @@
-import { saveContentAction } from "@/app/admin/actions";
+import { discardContentAction, publishContentAction, saveContentDraftAction } from "@/app/admin/actions";
 import { DriveLinkInput } from "@/components/drive-link-input";
+import { LivePreviewPanel } from "@/components/live-preview-panel";
 import { getAdminData } from "@/lib/site";
 
 const sectionNames: Record<string, string> = {
@@ -32,23 +33,41 @@ export default async function ContentPage() {
     accumulator[item.section].push(item);
     return accumulator;
   }, {});
+  const hasDrafts = contents.some((row) => row.draftValue !== null || row.draftVisible !== null);
 
   return (
     <>
       <header className="admin-header"><div><h1 className="display admin-title">កែខ្លឹមសារគេហទំព័រ</h1><p className="admin-note">អក្សរ តំណ លេខ និងរូបភាពនៅទំព័រសាធារណៈអាចកែបាននៅទីនេះ។</p></div></header>
-      <form action={saveContentAction}>
-        {Object.entries(grouped).map(([section, rows]) => <section className="form-card" key={section}><h2>{sectionNames[section] ?? section}</h2><div className="field-grid">{rows.map((row) => {
-          const isLarge = row.type === "RICH_TEXT" || row.value.length > 100;
-          const isImage = row.type === "IMAGE";
-          return <div className={`field ${isLarge || isImage ? "field-wide" : ""}`} key={row.id}>
-            <label htmlFor={`content:${row.key}`}>{labels[row.key] ?? row.key}</label>
-            {isImage ? <DriveLinkInput id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={row.value} /> : isLarge ? <textarea className="textarea" id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={row.value} /> : <input className="input" id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={row.value} type={row.type === "LINK" ? "url" : "text"} />}
-            {isImage && <p className="help">ដាក់រូបទៅក្នុង Google Drive របស់អ្នក កំណត់ជា <strong>Anyone with the link</strong> រួចបិទភ្ជាប់តំណ <code>/file/d/...</code> នៅទីនេះ។ រូបមិនត្រូវកែពី source code ទេ។</p>}
-            <label className="help"><input name={`visible:${row.key}`} type="checkbox" defaultChecked={row.visible} /> បង្ហាញធាតុនេះលើគេហទំព័រ</label>
-          </div>;
-        })}</div></section>)}
-        <div className="form-actions"><button className="button button-primary" type="submit">រក្សាទុកការកែប្រែ</button></div>
-      </form>
+
+      <div className="editor-layout">
+        <div>
+          {hasDrafts && (
+            <div className="draft-banner">
+              <span>មានការកែប្រែដែលមិនទាន់ផ្សាយ — គេហទំព័រសាធារណៈឃើញខ្លឹមសារចាស់។</span>
+              <span style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
+                <form action={publishContentAction}><button className="button button-primary button-small" type="submit">ផ្សាយឥឡូវនេះ</button></form>
+                <form action={discardContentAction}><button className="button button-outline button-small" type="submit">បោះបង់ការកែប្រែ</button></form>
+              </span>
+            </div>
+          )}
+          <form action={saveContentDraftAction}>
+            {Object.entries(grouped).map(([section, rows]) => <section className="form-card" key={section}><h2>{sectionNames[section] ?? section}</h2><div className="field-grid">{rows.map((row) => {
+              const value = row.draftValue ?? row.value;
+              const visible = row.draftVisible ?? row.visible;
+              const isLarge = row.type === "RICH_TEXT" || value.length > 100;
+              const isImage = row.type === "IMAGE";
+              return <div className={`field ${isLarge || isImage ? "field-wide" : ""}`} key={row.id}>
+                <label htmlFor={`content:${row.key}`}>{labels[row.key] ?? row.key}{row.draftValue !== null || row.draftVisible !== null ? " ✏️" : ""}</label>
+                {isImage ? <DriveLinkInput id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={value} /> : isLarge ? <textarea className="textarea" id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={value} /> : <input className="input" id={`content:${row.key}`} name={`content:${row.key}`} defaultValue={value} type={row.type === "LINK" ? "url" : "text"} />}
+                {isImage && <p className="help">ដាក់រូបទៅក្នុង Google Drive របស់អ្នក កំណត់ជា <strong>Anyone with the link</strong> រួចបិទភ្ជាប់តំណ <code>/file/d/...</code> នៅទីនេះ។ រូបមិនត្រូវកែពី source code ទេ។</p>}
+                <label className="help"><input name={`visible:${row.key}`} type="checkbox" defaultChecked={visible} /> បង្ហាញធាតុនេះលើគេហទំព័រ</label>
+              </div>;
+            })}</div></section>)}
+            <div className="form-actions"><button className="button button-primary" type="submit">រក្សាទុកសេចក្តីព្រាង</button></div>
+          </form>
+        </div>
+        <LivePreviewPanel />
+      </div>
     </>
   );
 }

@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { redirect } from "next/navigation";import { z } from "zod";
 import { AuthError } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { auth, signIn, signOut } from "@/auth";
@@ -45,7 +44,9 @@ export async function logoutAction() {
   await signOut({ redirectTo: "/admin/login" });
 }
 
-export async function saveContentAction(formData: FormData) {
+// Saves edits as DRAFTS: the public site keeps showing published values until
+// publishContentAction runs. Only /preview and the editor revalidate here.
+export async function saveContentDraftAction(formData: FormData) {
   await requireAdmin();
   const rows = await prisma.siteContent.findMany();
 
@@ -57,26 +58,54 @@ export async function saveContentAction(formData: FormData) {
         const image = getDriveImage(value);
         if (!image) throw new Error(`តំណ Google Drive សម្រាប់ ${row.key} មិនត្រឹមត្រូវ។`);
       }
-      return prisma.siteContent.update({ where: { id: row.id }, data: { value, visible } });
+      const changed = value !== row.value || visible !== row.visible;
+      return prisma.siteContent.update({
+        where: { id: row.id },
+        data: changed ? { draftValue: value, draftVisible: visible } : { draftValue: null, draftVisible: null },
+      });
     }),
   );
 
-  const driveValues = rows
-    .filter((row) => row.type === "IMAGE")
-    .map((row) => String(formData.get(`content:${row.key}`) ?? "").trim())
-    .filter(Boolean);
-  for (const driveUrl of driveValues) {
-    const image = getDriveImage(driveUrl);
-    if (image) {
-      await prisma.mediaAsset.upsert({
-        where: { driveUrl: image.originalUrl },
-        update: { driveFileId: image.fileId, renderUrl: image.renderUrl, validationState: "valid" },
-        create: { driveUrl: image.originalUrl, driveFileId: image.fileId, renderUrl: image.renderUrl, category: "content" },
-      });
+  revalidatePath("/preview");
+  revalidatePath("/admin/content");
+}
+
+// Publishes all drafts (copy draft → published, clear drafts) and registers
+// any Drive images with the mediaAsset table.
+export async function publishContentAction() {
+  await requireAdmin();
+  const rows = await prisma.siteContent.findMany({ where: { draftValue: { not: null } } });
+  if (rows.length) {
+    await prisma.$transaction(
+      rows.map((row) =>
+        prisma.siteContent.update({
+          where: { id: row.id },
+          data: { value: row.draftValue ?? row.value, visible: row.draftVisible ?? row.visible, draftValue: null, draftVisible: null },
+        }),
+      ),
+    );
+    for (const row of rows) {
+      if (row.type !== "IMAGE" || !row.value) continue;
+      const image = getDriveImage(row.value);
+      if (image) {
+        await prisma.mediaAsset.upsert({
+          where: { driveUrl: image.originalUrl },
+          update: { driveFileId: image.fileId, renderUrl: image.renderUrl, validationState: "valid" },
+          create: { driveUrl: image.originalUrl, driveFileId: image.fileId, renderUrl: image.renderUrl, category: "content" },
+        });
+      }
     }
   }
 
   refreshPublic();
+  revalidatePath("/preview");
+  revalidatePath("/admin/content");
+}
+
+export async function discardContentAction() {
+  await requireAdmin();
+  await prisma.siteContent.updateMany({ data: { draftValue: null, draftVisible: null } });
+  revalidatePath("/preview");
   revalidatePath("/admin/content");
 }
 

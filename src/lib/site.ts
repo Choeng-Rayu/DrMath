@@ -110,11 +110,13 @@ export const getSiteData = cache(async function getSiteData() {
     ]);
 
     const content = { ...fallbackContent, ...Object.fromEntries(contentRows.map((row) => [row.key, row.value])) };
+    const hiddenKeys = contentRows.filter((row) => !row.visible).map((row) => row.key);
     let phones = fallbackSettings.phones;
     try { phones = settings?.phones ? JSON.parse(settings.phones) : phones; } catch { /* use seed fallback */ }
 
     return {
       content,
+      hiddenKeys,
       settings: settings ? { ...settings, phones } : fallbackSettings,
       subjects: subjects.length ? subjects : fallbackSubjects,
       testimonials: testimonials.length ? testimonials : fallbackTestimonials,
@@ -123,6 +125,49 @@ export const getSiteData = cache(async function getSiteData() {
   } catch {
     return {
       content: fallbackContent,
+      hiddenKeys: [] as string[],
+      settings: fallbackSettings,
+      subjects: fallbackSubjects,
+      testimonials: fallbackTestimonials,
+      videos: [],
+    };
+  }
+});
+
+// Like getSiteData but with unsaved drafts overlaid on published values.
+// Used by the admin-only /preview route only — never the public homepage.
+export const getPreviewData = cache(async function getPreviewData() {
+  noStore();
+  try {
+    const [contentRows, settings, subjects, testimonials, videos] = await Promise.all([
+      prisma.siteContent.findMany(),
+      prisma.settings.findUnique({ where: { id: "site-settings" } }),
+      prisma.subject.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
+      prisma.testimonial.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
+      prisma.video.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
+    ]);
+
+    const content = { ...fallbackContent };
+    const hiddenKeys: string[] = [];
+    for (const row of contentRows) {
+      content[row.key] = row.draftValue ?? row.value;
+      if (!(row.draftVisible ?? row.visible)) hiddenKeys.push(row.key);
+    }
+    let phones = fallbackSettings.phones;
+    try { phones = settings?.phones ? JSON.parse(settings.phones) : phones; } catch { /* use seed fallback */ }
+
+    return {
+      content,
+      hiddenKeys,
+      settings: settings ? { ...settings, phones } : fallbackSettings,
+      subjects: subjects.length ? subjects : fallbackSubjects,
+      testimonials: testimonials.length ? testimonials : fallbackTestimonials,
+      videos,
+    };
+  } catch {
+    return {
+      content: fallbackContent,
+      hiddenKeys: [] as string[],
       settings: fallbackSettings,
       subjects: fallbackSubjects,
       testimonials: fallbackTestimonials,

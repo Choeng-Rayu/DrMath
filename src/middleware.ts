@@ -14,9 +14,15 @@ export default auth((request) => {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (pathname === "/preview" && !request.auth) {
+    const loginUrl = new URL("/admin/login", request.nextUrl.origin);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 });
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/preview"],
 };
