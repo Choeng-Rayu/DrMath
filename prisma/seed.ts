@@ -117,11 +117,16 @@ async function main() {
   const email = process.env.ADMIN_EMAIL?.toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   if (email && password) {
+    // Remove obsolete admin accounts so only the configured admin exists
+    await prisma.adminUser.deleteMany({
+      where: { email: { not: email } },
+    });
+
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.adminUser.upsert({
       where: { email },
-      update: { passwordHash, name: process.env.ADMIN_NAME ?? "DR.MATHS Administrator" },
-      create: { email, passwordHash, name: process.env.ADMIN_NAME ?? "DR.MATHS Administrator" },
+      update: { passwordHash, name: process.env.ADMIN_NAME ?? "Mr. Korm Sambath" },
+      create: { email, passwordHash, name: process.env.ADMIN_NAME ?? "Mr. Korm Sambath" },
     });
   } else {
     console.warn("Skipped admin user seed: set ADMIN_EMAIL and ADMIN_PASSWORD first.");
