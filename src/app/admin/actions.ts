@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";import { z } from "zod";
+import { redirect } from "next/navigation";
+import { z } from "zod";
 import { AuthError } from "next-auth";
 import { Prisma } from "@prisma/client";
 import { auth, signIn, signOut } from "@/auth";
@@ -20,6 +21,7 @@ async function requireAdmin() {
 function refreshPublic() {
   revalidatePath("/");
   revalidatePath("/admin");
+  revalidatePath("/preview");
 }
 
 function isPrismaError(error: unknown, code: string): error is Prisma.PrismaClientKnownRequestError {
@@ -74,19 +76,30 @@ export async function saveContentDraftAction(formData: FormData) {
 // any Drive images with the mediaAsset table.
 export async function publishContentAction() {
   await requireAdmin();
-  const rows = await prisma.siteContent.findMany({ where: { draftValue: { not: null } } });
+  const rows = await prisma.siteContent.findMany({
+    where: {
+      OR: [{ draftValue: { not: null } }, { draftVisible: { not: null } }],
+    },
+  });
+
   if (rows.length) {
     await prisma.$transaction(
       rows.map((row) =>
         prisma.siteContent.update({
           where: { id: row.id },
-          data: { value: row.draftValue ?? row.value, visible: row.draftVisible ?? row.visible, draftValue: null, draftVisible: null },
+          data: {
+            value: row.draftValue ?? row.value,
+            visible: row.draftVisible ?? row.visible,
+            draftValue: null,
+            draftVisible: null,
+          },
         }),
       ),
     );
     for (const row of rows) {
-      if (row.type !== "IMAGE" || !row.value) continue;
-      const image = getDriveImage(row.value);
+      const publishedValue = row.draftValue ?? row.value;
+      if (row.type !== "IMAGE" || !publishedValue) continue;
+      const image = getDriveImage(publishedValue);
       if (image) {
         await prisma.mediaAsset.upsert({
           where: { driveUrl: image.originalUrl },
@@ -111,7 +124,7 @@ export async function discardContentAction() {
 
 export async function saveSettingsAction(formData: FormData) {
   await requireAdmin();
-  const data = {
+  const rawData = {
     phones: String(formData.get("phones") ?? "")
       .split("\n")
       .map((phone) => phone.trim())
@@ -129,57 +142,73 @@ export async function saveSettingsAction(formData: FormData) {
     seoDescriptionKh: String(formData.get("seoDescriptionKh") ?? "").trim(),
   };
 
-  const parsedUrls = [data.telegramUrl, data.facebookUrl, data.tiktokUrl, data.instagramUrl].map((url) => optionalUrl.parse(url));
-  const logo = data.logoDriveUrl ? getDriveImage(data.logoDriveUrl) : null;
-  if (data.logoDriveUrl && !logo) throw new Error("តំណរូបសញ្ញា Google Drive មិនត្រឹមត្រូវ។");
+  const parsedTelegram = optionalUrl.safeParse(rawData.telegramUrl);
+  const parsedFacebook = optionalUrl.safeParse(rawData.facebookUrl);
+  const parsedTiktok = optionalUrl.safeParse(rawData.tiktokUrl);
+  const parsedInstagram = optionalUrl.safeParse(rawData.instagramUrl);
 
-  await prisma.settings.upsert({
-    where: { id: "site-settings" },
-    update: {
-      phones: JSON.stringify(data.phones),
-      telegramUrl: parsedUrls[0] || null,
-      facebookUrl: parsedUrls[1] || null,
-      tiktokUrl: parsedUrls[2] || null,
-      instagramUrl: parsedUrls[3] || null,
-      logoDriveUrl: logo?.originalUrl ?? null,
-      logoDriveId: logo?.fileId ?? null,
-      logoRenderUrl: logo?.renderUrl ?? null,
-      logoAlt: data.logoAlt || "DR.MATHS",
-      addressKh: data.addressKh || null,
-      hoursKh: data.hoursKh || null,
-      footerTextKh: data.footerTextKh || null,
-      seoTitleKh: data.seoTitleKh || null,
-      seoDescriptionKh: data.seoDescriptionKh || null,
-    },
-    create: {
-      id: "site-settings",
-      phones: JSON.stringify(data.phones),
-      telegramUrl: parsedUrls[0] || null,
-      facebookUrl: parsedUrls[1] || null,
-      tiktokUrl: parsedUrls[2] || null,
-      instagramUrl: parsedUrls[3] || null,
-      logoDriveUrl: logo?.originalUrl ?? null,
-      logoDriveId: logo?.fileId ?? null,
-      logoRenderUrl: logo?.renderUrl ?? null,
-      logoAlt: data.logoAlt || "DR.MATHS",
-      addressKh: data.addressKh || null,
-      hoursKh: data.hoursKh || null,
-      footerTextKh: data.footerTextKh || null,
-      seoTitleKh: data.seoTitleKh || null,
-      seoDescriptionKh: data.seoDescriptionKh || null,
-    },
-  });
+  if (!parsedTelegram.success || !parsedFacebook.success || !parsedTiktok.success || !parsedInstagram.success) {
+    redirect("/admin/settings?error=invalid");
+  }
 
-  if (logo) {
-    await prisma.mediaAsset.upsert({
-      where: { driveUrl: logo.originalUrl },
-      update: { driveFileId: logo.fileId, renderUrl: logo.renderUrl, validationState: "valid" },
-      create: { driveUrl: logo.originalUrl, driveFileId: logo.fileId, renderUrl: logo.renderUrl, category: "logo" },
+  const logo = rawData.logoDriveUrl ? getDriveImage(rawData.logoDriveUrl) : null;
+  if (rawData.logoDriveUrl && !logo) {
+    redirect("/admin/settings?error=invalid");
+  }
+
+  try {
+    await prisma.settings.upsert({
+      where: { id: "site-settings" },
+      update: {
+        phones: JSON.stringify(rawData.phones),
+        telegramUrl: parsedTelegram.data || null,
+        facebookUrl: parsedFacebook.data || null,
+        tiktokUrl: parsedTiktok.data || null,
+        instagramUrl: parsedInstagram.data || null,
+        logoDriveUrl: logo?.originalUrl ?? null,
+        logoDriveId: logo?.fileId ?? null,
+        logoRenderUrl: logo?.renderUrl ?? null,
+        logoAlt: rawData.logoAlt || "DR.MATHS",
+        addressKh: rawData.addressKh || null,
+        hoursKh: rawData.hoursKh || null,
+        footerTextKh: rawData.footerTextKh || null,
+        seoTitleKh: rawData.seoTitleKh || null,
+        seoDescriptionKh: rawData.seoDescriptionKh || null,
+      },
+      create: {
+        id: "site-settings",
+        phones: JSON.stringify(rawData.phones),
+        telegramUrl: parsedTelegram.data || null,
+        facebookUrl: parsedFacebook.data || null,
+        tiktokUrl: parsedTiktok.data || null,
+        instagramUrl: parsedInstagram.data || null,
+        logoDriveUrl: logo?.originalUrl ?? null,
+        logoDriveId: logo?.fileId ?? null,
+        logoRenderUrl: logo?.renderUrl ?? null,
+        logoAlt: rawData.logoAlt || "DR.MATHS",
+        addressKh: rawData.addressKh || null,
+        hoursKh: rawData.hoursKh || null,
+        footerTextKh: rawData.footerTextKh || null,
+        seoTitleKh: rawData.seoTitleKh || null,
+        seoDescriptionKh: rawData.seoDescriptionKh || null,
+      },
     });
+
+    if (logo) {
+      await prisma.mediaAsset.upsert({
+        where: { driveUrl: logo.originalUrl },
+        update: { driveFileId: logo.fileId, renderUrl: logo.renderUrl, validationState: "valid" },
+        create: { driveUrl: logo.originalUrl, driveFileId: logo.fileId, renderUrl: logo.renderUrl, category: "logo" },
+      });
+    }
+  } catch (error) {
+    console.error("[saveSettingsAction]", error);
+    redirect("/admin/settings?error=save");
   }
 
   refreshPublic();
   revalidatePath("/admin/settings");
+  redirect("/admin/settings?saved=true");
 }
 
 const videoSchema = z.object({
@@ -259,7 +288,7 @@ const subjectSchema = z.object({
 
 export async function saveSubjectAction(formData: FormData) {
   await requireAdmin();
-  const parsed = subjectSchema.parse({
+  const parsed = subjectSchema.safeParse({
     id: String(formData.get("id") ?? "") || undefined,
     icon: String(formData.get("icon") ?? "∑").trim(),
     nameKh: String(formData.get("nameKh") ?? "").trim(),
@@ -267,8 +296,16 @@ export async function saveSubjectAction(formData: FormData) {
     order: String(formData.get("order") ?? "0"),
     visible: formData.get("visible") === "on",
   });
-  if (parsed.id) await prisma.subject.update({ where: { id: parsed.id }, data: parsed });
-  else await prisma.subject.create({ data: parsed });
+  if (!parsed.success) redirect("/admin/subjects?error=invalid");
+
+  try {
+    if (parsed.data.id) await prisma.subject.update({ where: { id: parsed.data.id }, data: parsed.data });
+    else await prisma.subject.create({ data: parsed.data });
+  } catch (error) {
+    console.error("[saveSubjectAction]", error);
+    redirect("/admin/subjects?error=save");
+  }
+
   refreshPublic();
   revalidatePath("/admin/subjects");
   redirect("/admin/subjects");
@@ -299,7 +336,7 @@ const testimonialSchema = z.object({
 
 export async function saveTestimonialAction(formData: FormData) {
   await requireAdmin();
-  const parsed = testimonialSchema.parse({
+  const parsed = testimonialSchema.safeParse({
     id: String(formData.get("id") ?? "") || undefined,
     nameKh: String(formData.get("nameKh") ?? "").trim(),
     roleKh: String(formData.get("roleKh") ?? "").trim() || undefined,
@@ -308,9 +345,17 @@ export async function saveTestimonialAction(formData: FormData) {
     order: String(formData.get("order") ?? "0"),
     visible: formData.get("visible") === "on",
   });
-  const data = { ...parsed, roleKh: parsed.roleKh ?? null };
-  if (parsed.id) await prisma.testimonial.update({ where: { id: parsed.id }, data });
-  else await prisma.testimonial.create({ data });
+  if (!parsed.success) redirect("/admin/testimonials?error=invalid");
+
+  const data = { ...parsed.data, roleKh: parsed.data.roleKh ?? null };
+  try {
+    if (data.id) await prisma.testimonial.update({ where: { id: data.id }, data });
+    else await prisma.testimonial.create({ data });
+  } catch (error) {
+    console.error("[saveTestimonialAction]", error);
+    redirect("/admin/testimonials?error=save");
+  }
+
   refreshPublic();
   revalidatePath("/admin/testimonials");
   redirect("/admin/testimonials");

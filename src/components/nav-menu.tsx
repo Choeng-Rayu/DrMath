@@ -11,10 +11,20 @@ function external(url: string) {
 
 /**
  * Site navigation: inline links on desktop, hamburger dropdown on mobile.
- * The dropdown closes on link tap, outside tap, or Escape — the old
- * <details>-based menu stayed open after navigation.
+ * Fully supports live CMS preview updates on desktop and mobile links,
+ * CTA button label/href updates, and visibility toggling.
  */
-export function NavMenu({ links, ctaLabel, ctaHref }: { links: NavLink[]; ctaLabel: string; ctaHref: string }) {
+export function NavMenu({
+  links,
+  ctaLabel,
+  ctaHref,
+  hiddenKeys = [],
+}: {
+  links: NavLink[];
+  ctaLabel: string;
+  ctaHref: string;
+  hiddenKeys?: string[];
+}) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -36,11 +46,21 @@ export function NavMenu({ links, ctaLabel, ctaHref }: { links: NavLink[]; ctaLab
     };
   }, [open]);
 
+  const isHidden = (key?: string) => (key && hiddenKeys.includes(key) ? { "data-cms-hidden": "true" } : {});
+
   return (
     <>
       <nav className="nav-links" aria-label="ម៉ឺនុយសំខាន់">
         {links.map((link) => (
-          <a key={link.href} href={link.href} data-cms-key={link.cmsKey}>{link.label}</a>
+          <a
+            key={link.href}
+            href={link.href}
+            data-cms-key={link.cmsKey}
+            data-cms-item={link.cmsKey}
+            {...isHidden(link.cmsKey)}
+          >
+            {link.label}
+          </a>
         ))}
       </nav>
       <div className="nav-toggle" ref={rootRef}>
@@ -56,15 +76,30 @@ export function NavMenu({ links, ctaLabel, ctaHref }: { links: NavLink[]; ctaLab
         {open && (
           <nav className="mobile-menu" aria-label="ម៉ឺនុយលើទូរស័ព្ទ">
             {links.map((link) => (
-              <a key={link.href} href={link.href} onClick={() => setOpen(false)}>
+              <a
+                key={link.href}
+                href={link.href}
+                data-cms-key={link.cmsKey}
+                data-cms-item={link.cmsKey}
+                {...isHidden(link.cmsKey)}
+                onClick={() => setOpen(false)}
+              >
                 {link.label}
               </a>
             ))}
           </nav>
         )}
       </div>
-      <a className="button button-primary" href={ctaHref} {...external(ctaHref)}>
-        {ctaLabel}<Send size={16} aria-hidden="true" />
+      <a
+        className="button button-primary"
+        href={ctaHref}
+        data-cms-href="nav.ctaUrl"
+        data-cms-item="nav.cta"
+        {...isHidden("nav.cta")}
+        {...external(ctaHref)}
+      >
+        <span data-cms-key="nav.cta">{ctaLabel}</span>
+        <Send size={16} aria-hidden="true" />
       </a>
     </>
   );

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { getDriveImage } from "../src/lib/drive";
 import { getYouTubeId, getYouTubeThumbnail } from "../src/lib/youtube";
+import { renderRichText, plain } from "../src/lib/text";
 
 const driveId = "1AbCdEfGhIjKlMnOpQrStUvWxYz";
 const drive = getDriveImage(`https://drive.google.com/file/d/${driveId}/view?usp=sharing`);
@@ -21,4 +22,15 @@ for (const url of [
 assert.equal(getYouTubeId("https://vimeo.com/1234"), null, "Non-YouTube video links must be rejected");
 assert.equal(getYouTubeThumbnail(expectedVideoId), `https://i.ytimg.com/vi/${expectedVideoId}/hqdefault.jpg`);
 
-console.log("CMS link-parsing smoke tests passed.");
+// Rich text & plain text tests
+assert.equal(plain("Hello <strong>World</strong>"), "Hello World");
+assert.equal(
+  renderRichText("មួយជំហានជាមួយ <strong>DR.MATHS</strong> = មួយជំហានជាមួយ ABC"),
+  "មួយជំហានជាមួយ <strong>DR.MATHS</strong> = មួយជំហានជាមួយ ABC"
+);
+assert.equal(
+  renderRichText('<script>alert("hack")</script><strong>Clean</strong>'),
+  '&lt;script&gt;alert(&quot;hack&quot;)&lt;/script&gt;<strong>Clean</strong>'
+);
+
+console.log("All CMS and Preview smoke tests passed successfully.");

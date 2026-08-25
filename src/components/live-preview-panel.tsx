@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ExternalLink, RotateCw } from "lucide-react";
 
 type Device = "desktop" | "tablet" | "mobile";
 
@@ -14,7 +15,9 @@ export function LivePreviewPanel() {
   const [device, setDevice] = useState<Device>("desktop");
 
   const sendFormState = () => {
-    const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>('input[name^="content:"], input[name^="visible:"], textarea[name^="content:"]');
+    const inputs = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
+      'input[name^="content:"], input[name^="visible:"], textarea[name^="content:"]'
+    );
     inputs.forEach((target) => {
       const name = target.getAttribute("name") ?? "";
       const key = name.slice(name.indexOf(":") + 1);
@@ -24,6 +27,12 @@ export function LivePreviewPanel() {
           : { type: "cms-preview", key, value: target.value };
       iframeRef.current?.contentWindow?.postMessage(message, "*");
     });
+  };
+
+  const reloadPreview = () => {
+    if (iframeRef.current) {
+      iframeRef.current.src = "/preview?embedded=true";
+    }
   };
 
   useEffect(() => {
@@ -61,22 +70,44 @@ export function LivePreviewPanel() {
     <aside className="preview-panel">
       <div className="preview-toolbar">
         <strong>មើលជាមុនផ្ទាល់</strong>
-        {(["desktop", "tablet", "mobile"] as Device[]).map((option) => (
+        <div style={{ display: "flex", gap: ".35rem", alignItems: "center" }}>
+          {(["desktop", "tablet", "mobile"] as Device[]).map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={`button button-small ${device === option ? "button-primary" : "button-secondary"}`}
+              onClick={() => setDevice(option)}
+            >
+              {option === "desktop" ? "កុំព្យូទ័រ" : option === "tablet" ? "ថេប្លេត" : "ទូរស័ព្ទ"}
+            </button>
+          ))}
+        </div>
+        <div style={{ marginInlineStart: "auto", display: "flex", gap: ".35rem", alignItems: "center" }}>
           <button
-            key={option}
             type="button"
-            className={`button button-small ${device === option ? "button-primary" : "button-outline"}`}
-            onClick={() => setDevice(option)}
+            className="button button-small button-secondary"
+            onClick={reloadPreview}
+            title="ផ្ទុកទំព័រមើលជាមុនឡើងវិញ"
           >
-            {option === "desktop" ? "កុំព្យូទ័រ" : option === "tablet" ? "ថេប្លេត" : "ទូរស័ព្ទ"}
+            <RotateCw size={14} aria-hidden="true" />
           </button>
-        ))}
+          <a
+            href="/preview"
+            target="_blank"
+            rel="noreferrer"
+            className="button button-small button-secondary"
+            title="បើកទំព័រមើលជាមុនក្នុងផ្ទាំងថ្មី"
+          >
+            <span>ពេញអេក្រង់</span>
+            <ExternalLink size={14} aria-hidden="true" />
+          </a>
+        </div>
       </div>
       <div className="preview-frame-wrap">
         <iframe
           ref={iframeRef}
           className="preview-frame"
-          src="/preview"
+          src="/preview?embedded=true"
           title="មើលគេហទំព័រជាមុន"
           onLoad={sendFormState}
           style={{ width: DEVICE_WIDTHS[device], maxWidth: "100%" }}

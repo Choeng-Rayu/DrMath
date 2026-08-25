@@ -9,18 +9,29 @@ import { PreviewBridge } from "@/components/preview-bridge";
 // squeeze the full-width homepage render; middleware also guards this path.
 export const dynamic = "force-dynamic";
 
-export default async function PreviewPage() {
+type PreviewPageProps = {
+  searchParams: Promise<{ embedded?: string }>;
+};
+
+export default async function PreviewPage({ searchParams }: PreviewPageProps) {
   const session = await auth();
   if (!session?.user) redirect("/admin/login?callbackUrl=/preview");
+
+  const params = await searchParams;
+  const isEmbedded = params.embedded === "true" || params.embedded === "1";
   const data = await getPreviewData();
 
   return (
     <div className="preview-page">
-      <div className="preview-bar">
-        <strong>មើលជាមុនការកែប្រែ</strong>
-        <span>នេះជាទំព័រមើលជាមុន — គេហទំព័រសាធារណៈមិនទាន់ផ្លាស់ប្តូរទេ។</span>
-        <Link className="button button-outline button-small" href="/admin/content">ត្រឡប់ទៅការកែសម្រួល</Link>
-      </div>
+      {!isEmbedded && (
+        <div className="preview-bar">
+          <strong>មើលជាមុនការកែប្រែ</strong>
+          <span>នេះជាទំព័រមើលជាមុន — គេហទំព័រសាធារណៈមិនទាន់ផ្លាស់ប្តូរទេ។</span>
+          <Link className="button button-outline button-small" href="/admin/content">
+            ត្រឡប់ទៅការកែសម្រួល
+          </Link>
+        </div>
+      )}
       <HomepageView {...data} />
       <PreviewBridge />
     </div>
