@@ -1,0 +1,52 @@
+{
+  "goal": "Add (A) live side-by-side iframe preview in the admin content editor and (B) draft/publish workflow with an admin-only /preview route. Edits save as drafts; public site shows published values until explicit Publish.",
+  "stack": "TypeScript, Next.js 15 App Router, Prisma 6 + Supabase Postgres, Tailwind v4 + custom CSS (globals.css), NextAuth v5 credentials (single admin), Zod. Do NOT change stack.",
+  "flow": "Schema migration first, then shared HomepageView server component, then draft data layer + /preview route + actions refactor, then admin content page live-preview panel. Each step verified with next build before moving on.",
+  "constraints": [
+    "Public '/' must never leak drafts — only Publish revalidates '/'. Draft saves revalidate only /preview and /admin/content.",
+    "keep HomepageView a SERVER component (no client state) to avoid hydration issues; force-dynamic + noStore already in play",
+    "do NOT weaken global CSP; only relax frame-ancestors for /preview per-route if browser self-embed is blocked",
+    "postMessage is the chosen live-preview transport (same-origin iframe); do not switch to polling/URL-params",
+    "preserve the mediaAsset.upsert IMAGE logic from the current saveContentAction into publishContentAction"
+  ],
+  "needs": ["frontend", "backend", "security"],
+  "cap": 5,
+  "slices": {
+    "frontend": [
+      {
+        "name": "homepage-view",
+        "task": "Extract shared HomepageView server component from page.tsx; add data-cms-key + data-cms-hidden attributes; update page.tsx wrapper and globals.css rule",
+        "area": "src/components/homepage-view.tsx, src/app/page.tsx, src/app/globals.css"
+      },
+      {
+        "name": "preview-route",
+        "task": "Build /preview page (server, draft data, toolbar) + client postMessage bridge for live keystroke updates; device-width handled by parent panel",
+        "area": "src/app/preview/page.tsx, src/app/preview/bridge.tsx"
+      },
+      {
+        "name": "admin-editor-panel",
+        "task": "Convert admin content page to client; wire form to saveContentDraftAction; add LivePreviewPanel iframe that postMessages content:/visible: changes; draft-present banner",
+        "area": "src/app/admin/content/page.tsx, src/components/live-preview-panel.tsx"
+      }
+    ],
+    "backend": [
+      {
+        "name": "schema-drafts",
+        "task": "Add draftValue String? @db.Text and draftVisible Boolean? to SiteContent; prisma migrate dev",
+        "area": "prisma/schema.prisma, prisma/migrations/"
+      },
+      {
+        "name": "draft-data-actions",
+        "task": "Add getPreviewData to site.ts; refactor saveContentAction into saveContentDraftAction/publishContentAction/discardContentAction with correct revalidatePath per action",
+        "area": "src/lib/site.ts, src/app/admin/actions.ts"
+      }
+    ],
+    "security": [
+      {
+        "name": "preview-protection-csp",
+        "task": "Extend middleware matcher + guard to protect /preview; verify/adjust next.config.ts CSP frame-ancestors for /preview self-embed; confirm postMessage not blocked",
+        "area": "src/middleware.ts, next.config.ts"
+      }
+    ]
+  }
+}
