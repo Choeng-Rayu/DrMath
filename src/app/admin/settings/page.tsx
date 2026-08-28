@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { saveSettingsAction } from "@/app/admin/actions";
-import { AdminErrorBanner } from "@/components/admin-error-banner";
+import { AdminAlertBanner } from "@/components/admin-alert-banner";
 import { DriveLinkInput } from "@/components/drive-link-input";
+import { SubmitButton } from "@/components/submit-button";
 import { getAdminData } from "@/lib/site";
 
 type SettingsPageProps = {
-  searchParams: Promise<{ error?: string; saved?: string }>;
+  searchParams: Promise<{ error?: string; success?: string; saved?: string }>;
 };
 
 export default async function SettingsPage({ searchParams }: SettingsPageProps) {
-  const { error, saved } = await searchParams;
+  const { error, success, saved } = await searchParams;
   const { settings } = await getAdminData();
   let phones: string[] = [];
   try {
@@ -17,6 +18,8 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
   } catch {
     phones = [];
   }
+
+  const successParam = success ?? (saved ? "saved" : undefined);
 
   return (
     <>
@@ -30,22 +33,7 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
         </Link>
       </header>
 
-      <AdminErrorBanner code={error} />
-      {saved && (
-        <div
-          className="success"
-          role="status"
-          style={{
-            background: "#eaf7ef",
-            border: "1px solid #bce6cb",
-            padding: ".75rem 1rem",
-            borderRadius: "10px",
-            marginBottom: "1rem",
-          }}
-        >
-          បានរក្សាទុកការកំណត់ដោយជោគជ័យ។
-        </div>
-      )}
+      <AdminAlertBanner error={error} success={successParam} />
 
       <form action={saveSettingsAction} className="form-card">
         <div className="field-grid">
@@ -157,9 +145,11 @@ export default async function SettingsPage({ searchParams }: SettingsPageProps) 
           </div>
         </div>
         <div className="form-actions">
-          <button className="button button-primary" type="submit">
-            រក្សាទុកការកំណត់
-          </button>
+          <SubmitButton
+            label="រក្សាទុកការកំណត់"
+            loadingLabel="កំពុងរក្សាទុកការកំណត់..."
+            variant="primary"
+          />
         </div>
       </form>
     </>

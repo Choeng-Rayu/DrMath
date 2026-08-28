@@ -117,3 +117,25 @@ model Testimonial {
 
   @@index([visible, order])
 }
+
+model Exercise {
+  id            String   @id @default(cuid())
+  titleKh       String
+  descriptionKh String?  @db.Text
+  subjectKh     String?
+  gradeKh       String?
+  driveUrl      String   @db.Text
+  driveFileId   String
+  renderUrl     String   @db.Text
+  solutionUrl   String?  @db.Text
+  featured      Boolean  @default(false)
+  order         Int      @default(0)
+  published     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([published, order])
+  @@index([featured])
+  @@index([subjectKh])
+}
+

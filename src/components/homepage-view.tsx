@@ -1,5 +1,6 @@
 import { BookOpen, ExternalLink, MapPin, Phone, Send, Sparkles } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
+import { ExerciseSection, type ExerciseItem } from "@/components/exercise-section";
 import type { ContentMap } from "@/lib/site";
 import { getDriveImage } from "@/lib/drive";
 import { renderRichText, plain } from "@/lib/text";
@@ -7,7 +8,7 @@ import { getYouTubeEmbed } from "@/lib/youtube";
 
 export type HomepageViewProps = {
   content: ContentMap;
-  hiddenKeys: string[];
+  hiddenKeys?: string[];
   settings: {
     phones: string[];
     telegramUrl: string | null;
@@ -23,6 +24,7 @@ export type HomepageViewProps = {
   subjects: { id: string; icon: string; nameKh: string; descriptionKh: string }[];
   testimonials: { id: string; nameKh: string; roleKh: string | null; quoteKh: string; rating: number }[];
   videos: { id: string; titleKh: string; youtubeId: string; youtubeUrl: string; thumbUrl: string; seriesKh: string | null; featured: boolean }[];
+  exercises?: ExerciseItem[];
 };
 
 function external(url: string | null | undefined) {
@@ -32,7 +34,7 @@ function external(url: string | null | undefined) {
 // Renders the public homepage from a data snapshot. Every CMS-managed element
 // carries data-cms-key so /preview's client bridge can live-edit it, and
 // data-cms-hidden hides rows the admin turned off.
-export function HomepageView({ content, hiddenKeys = [], settings, subjects, testimonials, videos }: HomepageViewProps) {
+export function HomepageView({ content, hiddenKeys = [], settings, subjects, testimonials, videos, exercises = [] }: HomepageViewProps) {
   const isHidden = (key: string) => hiddenKeys.includes(key);
   const hidden = (key: string) => (isHidden(key) ? { "data-cms-hidden": "true" } : {});
 
@@ -79,6 +81,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
               { href: "#about", label: content["nav.about"], cmsKey: "nav.about" },
               { href: "#subjects", label: content["nav.subjects"], cmsKey: "nav.subjects" },
               { href: "#videos", label: content["nav.videos"], cmsKey: "nav.videos" },
+              { href: "#exercises", label: content["nav.exercises"] ?? "លំហាត់", cmsKey: "nav.exercises" },
               { href: "#contact", label: content["nav.contact"], cmsKey: "nav.contact" },
             ]}
             ctaLabel={content["nav.cta"]}
@@ -282,6 +285,14 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
           </div>
         </div>
       </section>
+
+      <ExerciseSection
+        exercises={exercises}
+        eyebrow={content["exercises.eyebrow"]}
+        title={content["exercises.title"]}
+        description={content["exercises.description"]}
+        telegramUrl={settings.telegramUrl}
+      />
 
       <section className="section">
         <div className="container">

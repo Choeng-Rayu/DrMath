@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { deleteSubjectAction, saveSubjectAction } from "@/app/admin/actions";
 import { DeleteButton } from "@/components/delete-button";
-import { AdminErrorBanner } from "@/components/admin-error-banner";
+import { AdminAlertBanner } from "@/components/admin-alert-banner";
+import { SubmitButton } from "@/components/submit-button";
 import { getAdminData } from "@/lib/site";
 
 function SubjectForm({
@@ -38,19 +39,21 @@ function SubjectForm({
           </label>
         </div>
         <div className="form-actions">
-          <button className="button button-primary" type="submit">
-            រក្សាទុក
-          </button>
+          <SubmitButton
+            label={subject ? "រក្សាទុកការកែប្រែ" : "រក្សាទុក"}
+            loadingLabel="កំពុងរក្សាទុក..."
+            variant="primary"
+          />
         </div>
       </form>
     </details>
   );
 }
 
-type SubjectsPageProps = { searchParams: Promise<{ error?: string }> };
+type SubjectsPageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
 export default async function SubjectsPage({ searchParams }: SubjectsPageProps) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const { subjects } = await getAdminData();
 
   return (
@@ -64,7 +67,7 @@ export default async function SubjectsPage({ searchParams }: SubjectsPageProps) 
           មើលទំព័រជាមុន ↗
         </Link>
       </header>
-      <AdminErrorBanner code={error} />
+      <AdminAlertBanner error={error} success={success} />
       <SubjectForm />
       {subjects.map((subject) => (
         <section key={subject.id}>

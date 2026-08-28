@@ -50,76 +50,97 @@ export async function logoutAction() {
 // publishContentAction runs. Only /preview and the editor revalidate here.
 export async function saveContentDraftAction(formData: FormData) {
   await requireAdmin();
-  const rows = await prisma.siteContent.findMany();
+  try {
+    const rows = await prisma.siteContent.findMany();
 
-  await prisma.$transaction(
-    rows.map((row) => {
-      const value = String(formData.get(`content:${row.key}`) ?? "").trim();
-      const visible = formData.get(`visible:${row.key}`) === "on";
-      if (row.type === "IMAGE" && value) {
-        const image = getDriveImage(value);
-        if (!image) throw new Error(`តំណ Google Drive សម្រាប់ ${row.key} មិនត្រឹមត្រូវ។`);
-      }
-      const changed = value !== row.value || visible !== row.visible;
-      return prisma.siteContent.update({
-        where: { id: row.id },
-        data: changed ? { draftValue: value, draftVisible: visible } : { draftValue: null, draftVisible: null },
-      });
-    }),
-  );
+    await prisma.$transaction(
+      rows.map((row) => {
+        const value = String(formData.get(`content:${row.key}`) ?? "").trim();
+        const visible = formData.get(`visible:${row.key}`) === "on";
+        if (row.type === "IMAGE" && value) {
+          const image = getDriveImage(value);
+          if (!image) throw new Error(`INVALID_DRIVE`);
+        }
+        const changed = value !== row.value || visible !== row.visible;
+        return prisma.siteContent.update({
+          where: { id: row.id },
+          data: changed ? { draftValue: value, draftVisible: visible } : { draftValue: null, draftVisible: null },
+        });
+      }),
+    );
+  } catch (error) {
+    console.error("[saveContentDraftAction]", error);
+    if (error instanceof Error && error.message === "INVALID_DRIVE") {
+      redirect("/admin/content?error=invalid_drive");
+    }
+    redirect("/admin/content?error=save");
+  }
 
   revalidatePath("/preview");
   revalidatePath("/admin/content");
+  redirect("/admin/content?success=draft_saved");
 }
 
 // Publishes all drafts (copy draft → published, clear drafts) and registers
 // any Drive images with the mediaAsset table.
 export async function publishContentAction() {
   await requireAdmin();
-  const rows = await prisma.siteContent.findMany({
-    where: {
-      OR: [{ draftValue: { not: null } }, { draftVisible: { not: null } }],
-    },
-  });
+  try {
+    const rows = await prisma.siteContent.findMany({
+      where: {
+        OR: [{ draftValue: { not: null } }, { draftVisible: { not: null } }],
+      },
+    });
 
-  if (rows.length) {
-    await prisma.$transaction(
-      rows.map((row) =>
-        prisma.siteContent.update({
-          where: { id: row.id },
-          data: {
-            value: row.draftValue ?? row.value,
-            visible: row.draftVisible ?? row.visible,
-            draftValue: null,
-            draftVisible: null,
-          },
-        }),
-      ),
-    );
-    for (const row of rows) {
-      const publishedValue = row.draftValue ?? row.value;
-      if (row.type !== "IMAGE" || !publishedValue) continue;
-      const image = getDriveImage(publishedValue);
-      if (image) {
-        await prisma.mediaAsset.upsert({
-          where: { driveUrl: image.originalUrl },
-          update: { driveFileId: image.fileId, renderUrl: image.renderUrl, validationState: "valid" },
-          create: { driveUrl: image.originalUrl, driveFileId: image.fileId, renderUrl: image.renderUrl, category: "content" },
-        });
+    if (rows.length) {
+      await prisma.$transaction(
+        rows.map((row) =>
+          prisma.siteContent.update({
+            where: { id: row.id },
+            data: {
+              value: row.draftValue ?? row.value,
+              visible: row.draftVisible ?? row.visible,
+              draftValue: null,
+              draftVisible: null,
+            },
+          }),
+        ),
+      );
+      for (const row of rows) {
+        const publishedValue = row.draftValue ?? row.value;
+        if (row.type !== "IMAGE" || !publishedValue) continue;
+        const image = getDriveImage(publishedValue);
+        if (image) {
+          await prisma.mediaAsset.upsert({
+            where: { driveUrl: image.originalUrl },
+            update: { driveFileId: image.fileId, renderUrl: image.renderUrl, validationState: "valid" },
+            create: { driveUrl: image.originalUrl, driveFileId: image.fileId, renderUrl: image.renderUrl, category: "content" },
+          });
+        }
       }
     }
+  } catch (error) {
+    console.error("[publishContentAction]", error);
+    redirect("/admin/content?error=save");
   }
 
   refreshPublic();
   revalidatePath("/preview");
   revalidatePath("/admin/content");
+  redirect("/admin/content?success=published");
 }
 
 export async function discardContentAction() {
   await requireAdmin();
-  await prisma.siteContent.updateMany({ data: { draftValue: null, draftVisible: null } });
+  try {
+    await prisma.siteContent.updateMany({ data: { draftValue: null, draftVisible: null } });
+  } catch (error) {
+    console.error("[discardContentAction]", error);
+    redirect("/admin/content?error=save");
+  }
   revalidatePath("/preview");
   revalidatePath("/admin/content");
+  redirect("/admin/content?success=discarded");
 }
 
 export async function saveSettingsAction(formData: FormData) {
@@ -153,7 +174,7 @@ export async function saveSettingsAction(formData: FormData) {
 
   const logo = rawData.logoDriveUrl ? getDriveImage(rawData.logoDriveUrl) : null;
   if (rawData.logoDriveUrl && !logo) {
-    redirect("/admin/settings?error=invalid");
+    redirect("/admin/settings?error=invalid_drive");
   }
 
   try {
@@ -208,7 +229,7 @@ export async function saveSettingsAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/settings");
-  redirect("/admin/settings?saved=true");
+  redirect("/admin/settings?success=saved");
 }
 
 const videoSchema = z.object({
@@ -260,14 +281,13 @@ export async function saveVideoAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/videos");
-  redirect("/admin/videos");
+  redirect("/admin/videos?success=saved");
 }
 
 export async function deleteVideoAction(formData: FormData) {
   await requireAdmin();
   const id = z.string().min(1).parse(formData.get("id"));
   try {
-    // deleteMany is a no-op when the record is already gone (delete would throw P2025).
     await prisma.video.deleteMany({ where: { id } });
   } catch (error) {
     console.error("[deleteVideoAction]", error);
@@ -275,6 +295,7 @@ export async function deleteVideoAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/videos");
+  redirect("/admin/videos?success=deleted");
 }
 
 const subjectSchema = z.object({
@@ -308,7 +329,7 @@ export async function saveSubjectAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/subjects");
-  redirect("/admin/subjects");
+  redirect("/admin/subjects?success=saved");
 }
 
 export async function deleteSubjectAction(formData: FormData) {
@@ -322,6 +343,7 @@ export async function deleteSubjectAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/subjects");
+  redirect("/admin/subjects?success=deleted");
 }
 
 const testimonialSchema = z.object({
@@ -358,7 +380,7 @@ export async function saveTestimonialAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/testimonials");
-  redirect("/admin/testimonials");
+  redirect("/admin/testimonials?success=saved");
 }
 
 export async function deleteTestimonialAction(formData: FormData) {
@@ -372,4 +394,88 @@ export async function deleteTestimonialAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/testimonials");
+  redirect("/admin/testimonials?success=deleted");
+}
+
+const exerciseSchema = z.object({
+  id: z.string().optional(),
+  titleKh: z.string().min(2).max(250),
+  descriptionKh: z.string().max(1000).optional(),
+  subjectKh: z.string().max(100).optional(),
+  gradeKh: z.string().max(100).optional(),
+  driveUrl: z.string().url(),
+  solutionUrl: z.string().optional(),
+  order: z.coerce.number().int().min(0).max(9999),
+  published: z.boolean(),
+  featured: z.boolean(),
+});
+
+export async function saveExerciseAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = exerciseSchema.safeParse({
+    id: String(formData.get("id") ?? "") || undefined,
+    titleKh: String(formData.get("titleKh") ?? "").trim(),
+    descriptionKh: String(formData.get("descriptionKh") ?? "").trim() || undefined,
+    subjectKh: String(formData.get("subjectKh") ?? "").trim() || undefined,
+    gradeKh: String(formData.get("gradeKh") ?? "").trim() || undefined,
+    driveUrl: String(formData.get("driveUrl") ?? "").trim(),
+    solutionUrl: String(formData.get("solutionUrl") ?? "").trim() || undefined,
+    order: String(formData.get("order") ?? "0"),
+    published: formData.get("published") === "on",
+    featured: formData.get("featured") === "on",
+  });
+  if (!parsed.success) redirect("/admin/exercises?error=invalid");
+  const driveImg = getDriveImage(parsed.data.driveUrl);
+  if (!driveImg) redirect("/admin/exercises?error=invalid_drive");
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const data = {
+        titleKh: parsed.data.titleKh,
+        descriptionKh: parsed.data.descriptionKh ?? null,
+        subjectKh: parsed.data.subjectKh ?? null,
+        gradeKh: parsed.data.gradeKh ?? null,
+        driveUrl: driveImg.originalUrl,
+        driveFileId: driveImg.fileId,
+        renderUrl: driveImg.renderUrl,
+        solutionUrl: parsed.data.solutionUrl ?? null,
+        order: parsed.data.order,
+        published: parsed.data.published,
+        featured: parsed.data.featured,
+      };
+
+      if (parsed.data.id) {
+        await tx.exercise.update({ where: { id: parsed.data.id }, data });
+      } else {
+        await tx.exercise.create({ data });
+      }
+
+      await tx.mediaAsset.upsert({
+        where: { driveUrl: driveImg.originalUrl },
+        update: { driveFileId: driveImg.fileId, renderUrl: driveImg.renderUrl, validationState: "valid" },
+        create: { driveUrl: driveImg.originalUrl, driveFileId: driveImg.fileId, renderUrl: driveImg.renderUrl, category: "exercise" },
+      });
+    });
+  } catch (error) {
+    console.error("[saveExerciseAction]", error);
+    redirect("/admin/exercises?error=save");
+  }
+
+  refreshPublic();
+  revalidatePath("/admin/exercises");
+  redirect("/admin/exercises?success=saved");
+}
+
+export async function deleteExerciseAction(formData: FormData) {
+  await requireAdmin();
+  const id = z.string().min(1).parse(formData.get("id"));
+  try {
+    await prisma.exercise.deleteMany({ where: { id } });
+  } catch (error) {
+    console.error("[deleteExerciseAction]", error);
+    redirect("/admin/exercises?error=delete");
+  }
+  refreshPublic();
+  revalidatePath("/admin/exercises");
+  redirect("/admin/exercises?success=deleted");
 }

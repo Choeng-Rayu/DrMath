@@ -9,6 +9,7 @@ export const fallbackContent: ContentMap = {
   "nav.about": "អំពីយើង",
   "nav.subjects": "មុខវិជ្ជា",
   "nav.videos": "វីដេអូ",
+  "nav.exercises": "លំហាត់",
   "nav.contact": "ទំនាក់ទំនង",
   "nav.cta": "ចុះឈ្មោះរៀន",
   "nav.ctaUrl": "https://t.me/sambathkorm",
@@ -50,6 +51,9 @@ export const fallbackContent: ContentMap = {
   "videos.eyebrow": "វីដេអូមេរៀនជាស៊េរី",
   "videos.title": "មើលមេរៀនឡើងវិញ តាមល្បឿនរបស់អ្នក",
   "videos.description": "វីដេអូដែលបានផ្សាយដោយគ្រូ បង្ហាញជាជំហានៗ និងងាយតាមដាន។",
+  "exercises.eyebrow": "លំហាត់ & វិញ្ញាសាអនុវត្ត",
+  "exercises.title": "ពង្រឹងសមត្ថភាពតាមរយៈលំហាត់ជាក់ស្តែង",
+  "exercises.description": "ទាញយក និងអនុវត្តលំហាត់ត្រៀមប្រឡងតាមកម្រិតថ្នាក់ និងមុខវិជ្ជាផ្សេងៗ។",
   "highlights.eyebrow": "ហេតុអ្វីជ្រើសរើស DR.MATHS",
   "highlights.title": "ការរៀនដែលផ្តល់លទ្ធផលជាក់ស្តែង",
   "highlights.1.title": "គ្រូមានបទពិសោធន៍",
@@ -65,6 +69,25 @@ export const fallbackContent: ContentMap = {
   "contact.description": "ទាក់ទង DR.MATHS ដើម្បីសួរព័ត៌មាន និងចុះឈ្មោះរៀន។",
   "contact.cta": "សួរព័ត៌មានតាម Telegram",
 };
+
+const fallbackExercises = [
+  {
+    id: "ex-1",
+    titleKh: "វិញ្ញាសាគណិតវិទ្យា ថ្នាក់ទី១២ - ត្រៀមប្រឡងបាក់ឌុប",
+    descriptionKh: "លំហាត់អនុគមន៍ អាំងតេក្រាល និងធរណីមាត្រក្នុងលំហ។",
+    subjectKh: "គណិតវិទ្យា",
+    gradeKh: "ថ្នាក់ទី១២",
+    driveUrl: "https://drive.google.com/file/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs/view",
+    driveFileId: "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs",
+    renderUrl: "/images/Photo-A.jpg",
+    solutionUrl: "https://t.me/sambathkorm",
+    featured: true,
+    order: 1,
+    published: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
 
 const fallbackSubjects = [
   { id: "math", icon: "∑", nameKh: "គណិតវិទ្យា", descriptionKh: "បង្កើតមូលដ្ឋានរឹងមាំ និងដោះស្រាយលំហាត់ដោយទំនុកចិត្ត។", order: 1, visible: true },
@@ -101,12 +124,13 @@ export const getSiteData = cache(async function getSiteData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contentRows, settings, subjects, testimonials, videos] = await Promise.all([
+      const [contentRows, settings, subjects, testimonials, videos, exercises] = await Promise.all([
         prisma.siteContent.findMany(),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.video.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
+        prisma.exercise.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
       ]);
 
       const content = { ...fallbackContent, ...Object.fromEntries(contentRows.map((row) => [row.key, row.value])) };
@@ -121,6 +145,7 @@ export const getSiteData = cache(async function getSiteData() {
         subjects: subjects.length ? subjects : fallbackSubjects,
         testimonials: testimonials.length ? testimonials : fallbackTestimonials,
         videos,
+        exercises: exercises.length ? exercises : fallbackExercises,
       };
     });
   } catch (error) {
@@ -132,6 +157,7 @@ export const getSiteData = cache(async function getSiteData() {
       subjects: fallbackSubjects,
       testimonials: fallbackTestimonials,
       videos: [],
+      exercises: fallbackExercises,
     };
   }
 });
@@ -142,12 +168,13 @@ export const getPreviewData = cache(async function getPreviewData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contentRows, settings, subjects, testimonials, videos] = await Promise.all([
+      const [contentRows, settings, subjects, testimonials, videos, exercises] = await Promise.all([
         prisma.siteContent.findMany(),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.video.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
+        prisma.exercise.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
       ]);
 
       const content = { ...fallbackContent };
@@ -166,6 +193,7 @@ export const getPreviewData = cache(async function getPreviewData() {
         subjects: subjects.length ? subjects : fallbackSubjects,
         testimonials: testimonials.length ? testimonials : fallbackTestimonials,
         videos,
+        exercises: exercises.length ? exercises : fallbackExercises,
       };
     });
   } catch (error) {
@@ -177,6 +205,7 @@ export const getPreviewData = cache(async function getPreviewData() {
       subjects: fallbackSubjects,
       testimonials: fallbackTestimonials,
       videos: [],
+      exercises: fallbackExercises,
     };
   }
 });
@@ -185,17 +214,19 @@ export async function getAdminData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contents, settings, subjects, testimonials, videos] = await Promise.all([
+      const [contents, settings, subjects, testimonials, videos, exercises] = await Promise.all([
         prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
         prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
+        prisma.exercise.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
       ]);
-      return { contents, settings, subjects, testimonials, videos };
+      return { contents, settings, subjects, testimonials, videos, exercises };
     });
   } catch (error) {
     console.error("[getAdminData] database error, using fallbacks:", error);
-    return { contents: [], settings: null, subjects: [], testimonials: [], videos: [] };
+    return { contents: [], settings: null, subjects: [], testimonials: [], videos: [], exercises: [] };
   }
 }
+

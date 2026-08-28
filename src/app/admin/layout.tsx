@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { logoutAction } from "@/app/admin/actions";
 import { AdminNav } from "@/components/admin-nav";
+import { SubmitButton } from "@/components/submit-button";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -27,9 +28,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             មើលគេហទំព័រ
           </Link>
           <form action={logoutAction}>
-            <button className="button button-outline button-small" style={{ width: "100%" }}>
-              ចាកចេញ
-            </button>
+            <SubmitButton
+              label="ចាកចេញ"
+              loadingLabel="កំពុងចាកចេញ..."
+              variant="outline"
+              size="small"
+              style={{ width: "100%" }}
+            />
           </form>
         </div>
       </aside>

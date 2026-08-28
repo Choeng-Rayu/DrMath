@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { VideoForm } from "@/components/video-form";
 import { DeleteButton } from "@/components/delete-button";
-import { AdminErrorBanner } from "@/components/admin-error-banner";
+import { AdminAlertBanner } from "@/components/admin-alert-banner";
 import { deleteVideoAction } from "@/app/admin/actions";
 import { getAdminData } from "@/lib/site";
 
-type VideosPageProps = { searchParams: Promise<{ error?: string }> };
+type VideosPageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
 export default async function VideosPage({ searchParams }: VideosPageProps) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const { videos } = await getAdminData();
 
   return (
@@ -22,7 +22,7 @@ export default async function VideosPage({ searchParams }: VideosPageProps) {
           មើលទំព័រជាមុន ↗
         </Link>
       </header>
-      <AdminErrorBanner code={error} />
+      <AdminAlertBanner error={error} success={success} />
       <VideoForm />
       <section className="form-card">
         <h2>វីដេអូដែលមាន</h2>

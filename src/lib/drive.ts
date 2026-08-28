@@ -18,10 +18,14 @@ export function getDriveImage(input: string): DriveImage | null {
   }
 
   const isGoogleDrive =
-    url.hostname === "drive.google.com" || url.hostname.endsWith(".drive.google.com");
+    url.hostname === "drive.google.com" ||
+    url.hostname.endsWith(".drive.google.com") ||
+    url.hostname === "docs.google.com";
   if (!isGoogleDrive) return null;
 
-  const pathMatch = url.pathname.match(/\/file\/d\/([A-Za-z0-9_-]+)/);
+  const pathMatch =
+    url.pathname.match(/\/(?:file|drive)(?:\/u\/\d+)?\/d\/([A-Za-z0-9_-]+)/) ||
+    url.pathname.match(/\/d\/([A-Za-z0-9_-]+)/);
   const queryId = url.searchParams.get("id");
   const fileId = pathMatch?.[1] ?? queryId ?? "";
 

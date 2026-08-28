@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { deleteTestimonialAction, saveTestimonialAction } from "@/app/admin/actions";
 import { DeleteButton } from "@/components/delete-button";
-import { AdminErrorBanner } from "@/components/admin-error-banner";
+import { AdminAlertBanner } from "@/components/admin-alert-banner";
+import { SubmitButton } from "@/components/submit-button";
 import { getAdminData } from "@/lib/site";
 
 function TestimonialForm({
@@ -48,19 +49,21 @@ function TestimonialForm({
           </label>
         </div>
         <div className="form-actions">
-          <button className="button button-primary" type="submit">
-            រក្សាទុក
-          </button>
+          <SubmitButton
+            label={testimonial ? "រក្សាទុកការកែប្រែ" : "រក្សាទុក"}
+            loadingLabel="កំពុងរក្សាទុក..."
+            variant="primary"
+          />
         </div>
       </form>
     </details>
   );
 }
 
-type TestimonialsPageProps = { searchParams: Promise<{ error?: string }> };
+type TestimonialsPageProps = { searchParams: Promise<{ error?: string; success?: string }> };
 
 export default async function TestimonialsPage({ searchParams }: TestimonialsPageProps) {
-  const { error } = await searchParams;
+  const { error, success } = await searchParams;
   const { testimonials } = await getAdminData();
 
   return (
@@ -74,7 +77,7 @@ export default async function TestimonialsPage({ searchParams }: TestimonialsPag
           មើលទំព័រជាមុន ↗
         </Link>
       </header>
-      <AdminErrorBanner code={error} />
+      <AdminAlertBanner error={error} success={success} />
       <TestimonialForm />
       {testimonials.map((testimonial) => (
         <section key={testimonial.id}>

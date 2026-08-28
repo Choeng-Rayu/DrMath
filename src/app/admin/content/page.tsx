@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { discardContentAction, publishContentAction, saveContentDraftAction } from "@/app/admin/actions";
+import { AdminAlertBanner } from "@/components/admin-alert-banner";
 import { DriveLinkInput } from "@/components/drive-link-input";
 import { LivePreviewPanel } from "@/components/live-preview-panel";
+import { SubmitButton } from "@/components/submit-button";
 import { getAdminData } from "@/lib/site";
 
 const sectionNames: Record<string, string> = {
@@ -12,6 +14,7 @@ const sectionNames: Record<string, string> = {
   subjects: "មុខវិជ្ជា",
   formats: "ទម្រង់រៀន",
   videos: "វីដេអូ",
+  exercises: "លំហាត់ & វិញ្ញាសា",
   highlights: "ចំណុចលេចធ្លោ",
   testimonials: "មតិយោបល់",
   contact: "ទំនាក់ទំនង",
@@ -22,6 +25,7 @@ const labels: Record<string, string> = {
   "nav.about": "ម៉ឺនុយ៖ អំពីយើង",
   "nav.subjects": "ម៉ឺនុយ៖ មុខវិជ្ជា",
   "nav.videos": "ម៉ឺនុយ៖ វីដេអូ",
+  "nav.exercises": "ម៉ឺនុយ៖ លំហាត់",
   "nav.contact": "ម៉ឺនុយ៖ ទំនាក់ទំនង",
   "nav.cta": "ប៊ូតុងចុះឈ្មោះ",
   "nav.ctaUrl": "តំណប៊ូតុងចុះឈ្មោះ",
@@ -63,6 +67,9 @@ const labels: Record<string, string> = {
   "videos.eyebrow": "អក្សរខាងលើ",
   "videos.title": "ចំណងជើងផ្នែក",
   "videos.description": "ពិពណ៌នាផ្នែក",
+  "exercises.eyebrow": "អក្សរខាងលើ",
+  "exercises.title": "ចំណងជើងផ្នែក",
+  "exercises.description": "ពិពណ៌នាផ្នែក",
   "highlights.eyebrow": "អក្សរខាងលើ",
   "highlights.title": "ចំណងជើងផ្នែក",
   "highlights.1.title": "ចំណុចទី១៖ ចំណងជើង",
@@ -79,7 +86,12 @@ const labels: Record<string, string> = {
   "contact.cta": "អក្សរប៊ូតុងទំនាក់ទំនង",
 };
 
-export default async function ContentPage() {
+type ContentPageProps = {
+  searchParams: Promise<{ error?: string; success?: string }>;
+};
+
+export default async function ContentPage({ searchParams }: ContentPageProps) {
+  const { error, success } = await searchParams;
   const { contents } = await getAdminData();
   const grouped = contents.reduce<Record<string, typeof contents>>((accumulator, item) => {
     accumulator[item.section] ??= [];
@@ -100,6 +112,8 @@ export default async function ContentPage() {
         </Link>
       </header>
 
+      <AdminAlertBanner error={error} success={success} />
+
       <div className="editor-layout">
         <div>
           {hasDrafts && (
@@ -107,14 +121,20 @@ export default async function ContentPage() {
               <span>មានការកែប្រែដែលមិនទាន់ផ្សាយ — គេហទំព័រសាធារណៈឃើញខ្លឹមសារចាស់។</span>
               <span style={{ display: "flex", gap: ".5rem", flexWrap: "wrap" }}>
                 <form action={publishContentAction}>
-                  <button className="button button-primary button-small" type="submit">
-                    ផ្សាយឥឡូវនេះ
-                  </button>
+                  <SubmitButton
+                    label="ផ្សាយឥឡូវនេះ"
+                    loadingLabel="កំពុងផ្សាយ..."
+                    variant="primary"
+                    size="small"
+                  />
                 </form>
                 <form action={discardContentAction}>
-                  <button className="button button-outline button-small" type="submit" style={{ color: "#b42222", borderColor: "#efbbbb" }}>
-                    បោះបង់ការកែប្រែ
-                  </button>
+                  <SubmitButton
+                    label="បោះបង់ការកែប្រែ"
+                    loadingLabel="កំពុងបោះបង់..."
+                    variant="danger"
+                    size="small"
+                  />
                 </form>
               </span>
             </div>
@@ -164,9 +184,11 @@ export default async function ContentPage() {
               </section>
             ))}
             <div className="form-actions">
-              <button className="button button-primary" type="submit">
-                រក្សាទុកសេចក្តីព្រាង
-              </button>
+              <SubmitButton
+                label="រក្សាទុកសេចក្តីព្រាង"
+                loadingLabel="កំពុងរក្សាទុកសេចក្តីព្រាង..."
+                variant="primary"
+              />
             </div>
           </form>
         </div>

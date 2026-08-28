@@ -12,7 +12,7 @@ type PreviewMessage = {
 };
 
 const RICH_HTML_KEYS = new Set(["hero.title"]);
-const RICH_PLAIN_KEYS = new Set(["hero.description", "about.vision", "about.mission", "about.long", "videos.description", "contact.description"]);
+const RICH_PLAIN_KEYS = new Set(["hero.description", "about.vision", "about.mission", "about.long", "videos.description", "exercises.description", "contact.description"]);
 
 // Receives live keystrokes from the admin editor iframe parent and applies
 // them to the server-rendered draft snapshot without a reload.

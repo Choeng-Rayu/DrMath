@@ -2,9 +2,10 @@ import Link from "next/link";
 import { getAdminData } from "@/lib/site";
 
 export default async function AdminDashboard() {
-  const { subjects, testimonials, videos } = await getAdminData();
+  const { subjects, testimonials, videos, exercises } = await getAdminData();
   const metrics = [
     [videos.length, "វីដេអូសរុប", "/admin/videos"],
+    [exercises.length, "លំហាត់ & វិញ្ញាសា", "/admin/exercises"],
     [subjects.length, "មុខវិជ្ជា", "/admin/subjects"],
     [testimonials.length, "មតិយោបល់", "/admin/testimonials"],
   ];
@@ -36,11 +37,14 @@ export default async function AdminDashboard() {
       <section className="form-card">
         <h2>ចាប់ផ្តើមឆាប់រហ័ស</h2>
         <p className="admin-note">
-          កែអក្សរ លេខទំនាក់ទំនង និងតំណ Google Drive ក្នុងផ្ទាំងខ្លឹមសារ។ បន្ថែមវីដេអូដោយបិទភ្ជាប់តំណ YouTube ហើយវីដេអូនឹងបង្ហាញក្នុងទំព័រសាធារណៈពេលផ្សាយរួច។
+          កែអក្សរ លេខទំនាក់ទំនង និងតំណ Google Drive ក្នុងផ្ទាំងខ្លឹមសារ។ បន្ថែមវីដេអូ និងលំហាត់/វិញ្ញាសាពី Google Drive ហើយផ្សាយទៅកាន់គេហទំព័រសាធារណៈ។
         </p>
         <div className="hero-actions">
           <Link className="button button-primary button-small" href="/admin/content">
             កែខ្លឹមសារ
+          </Link>
+          <Link className="button button-secondary button-small" href="/admin/exercises">
+            បន្ថែមលំហាត់
           </Link>
           <Link className="button button-secondary button-small" href="/admin/videos">
             បន្ថែមវីដេអូ
