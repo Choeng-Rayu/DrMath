@@ -105,7 +105,7 @@ export function ExerciseSection({
   }, [activeExerciseIndex, closeLightbox, nextExercise, prevExercise]);
 
   return (
-    <section id="exercises" className="section exercise-section paper-grid" style={{ backgroundColor: "#fbfcfe" }}>
+    <section id="exercises" data-cms-section="exercises" className="section exercise-section paper-grid" style={{ backgroundColor: "#fbfcfe" }}>
       <div className="container">
         <p className="eyebrow" data-cms-key="exercises.eyebrow">
           {eyebrow}

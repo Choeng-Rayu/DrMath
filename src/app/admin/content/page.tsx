@@ -141,7 +141,7 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
           )}
           <form action={saveContentDraftAction}>
             {Object.entries(grouped).map(([section, rows]) => (
-              <section className="form-card" key={section}>
+              <section className="form-card" key={section} data-cms-section={section}>
                 <h2>{sectionNames[section] ?? section}</h2>
                 <div className="field-grid">
                   {rows.map((row) => {
@@ -151,7 +151,7 @@ export default async function ContentPage({ searchParams }: ContentPageProps) {
                     const isImage = row.type === "IMAGE";
                     const isDraft = row.draftValue !== null || row.draftVisible !== null;
                     return (
-                      <div className={`field ${isLarge || isImage ? "field-wide" : ""}`} key={row.id}>
+                      <div className={`field ${isLarge || isImage ? "field-wide" : ""}`} key={row.id} data-cms-key={row.key}>
                         <label htmlFor={`content:${row.key}`}>
                           {labels[row.key] ?? row.key}
                           {isDraft ? " ✏️" : ""}

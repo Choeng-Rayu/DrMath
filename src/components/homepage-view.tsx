@@ -55,7 +55,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
 
   return (
     <main className="site-shell">
-      <div className="topbar">
+      <div className="topbar" id="topbar" data-cms-section="settings">
         <div className="container topbar-inner">
           <div className="topbar-links" data-cms-key="settings.phones">
             <span>☎ {settings.phones.join(" / ")}</span>
@@ -69,7 +69,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </div>
 
-      <header className="nav">
+      <header className="nav" id="nav" data-cms-section="nav">
         <div className="container nav-inner">
           <a className="brand" href="#home" aria-label="DR.MATHS ទំព័រដើម">
             <img src={settings.logoRenderUrl ?? "/logo.jpg"} alt={settings.logoAlt ?? "DR.MATHS"} width="38" height="38" style={{ objectFit: "contain", borderRadius: 8 }} referrerPolicy="no-referrer" />
@@ -91,7 +91,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </header>
 
-      <section id="home" className="hero paper-grid">
+      <section id="home" data-cms-section="hero" className="hero paper-grid">
         <div className="container hero-grid">
           <div>
             <p className="eyebrow" data-cms-key="hero.eyebrow">{content["hero.eyebrow"]}</p>
@@ -146,7 +146,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section className="stats" aria-label="ស្ថិតិ DR.MATHS">
+      <section id="stats" data-cms-section="stats" className="stats" aria-label="ស្ថិតិ DR.MATHS">
         <div className="container stats-grid">
           {[1, 2, 3, 4].map((number) => {
             const valKey = `stats.${number}.value`;
@@ -167,7 +167,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section id="about" className="section">
+      <section id="about" data-cms-section="about" className="section">
         <div className="container">
           <p className="eyebrow" data-cms-key="about.eyebrow">{content["about.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="about.title">{content["about.title"]}</h2>
@@ -200,7 +200,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section id="subjects" className="section paper-grid" style={{ backgroundColor: "#f7f9ff" }}>
+      <section id="subjects" data-cms-section="subjects" className="section paper-grid" style={{ backgroundColor: "#f7f9ff" }}>
         <div className="container">
           <p className="eyebrow" data-cms-key="subjects.eyebrow">{content["subjects.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="subjects.title">{content["subjects.title"]}</h2>
@@ -216,7 +216,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section className="section">
+      <section id="formats" data-cms-section="formats" className="section">
         <div className="container">
           <p className="eyebrow" data-cms-key="formats.eyebrow">{content["formats.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="formats.title">{content["formats.title"]}</h2>
@@ -242,7 +242,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section id="videos" className="section video-section">
+      <section id="videos" data-cms-section="videos" className="section video-section">
         <div className="container">
           <p className="eyebrow" data-cms-key="videos.eyebrow">{content["videos.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="videos.title">{content["videos.title"]}</h2>
@@ -294,7 +294,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         telegramUrl={settings.telegramUrl}
       />
 
-      <section className="section">
+      <section id="highlights" data-cms-section="highlights" className="section">
         <div className="container">
           <p className="eyebrow" data-cms-key="highlights.eyebrow">{content["highlights.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="highlights.title">{content["highlights.title"]}</h2>
@@ -320,7 +320,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section className="section paper-grid" style={{ backgroundColor: "#f7f9ff" }}>
+      <section id="testimonials" data-cms-section="testimonials" className="section paper-grid" style={{ backgroundColor: "#f7f9ff" }}>
         <div className="container">
           <p className="eyebrow" data-cms-key="testimonials.eyebrow">{content["testimonials.eyebrow"]}</p>
           <h2 className="display section-title" data-cms-key="testimonials.title">{content["testimonials.title"]}</h2>
@@ -338,7 +338,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <section id="contact" className="section contact">
+      <section id="contact" data-cms-section="contact" className="section contact">
         <div className="container contact-grid">
           <div>
             <p className="eyebrow" data-cms-key="contact.eyebrow">{content["contact.eyebrow"]}</p>
@@ -363,7 +363,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
         </div>
       </section>
 
-      <footer className="footer">
+      <footer id="footer" data-cms-section="footer" className="footer">
         <div className="container footer-grid">
           <div>
             <a className="brand" href="#home">
