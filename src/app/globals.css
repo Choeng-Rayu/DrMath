@@ -335,6 +335,46 @@ section[id] { scroll-margin-top: 5.25rem; }
   }
 }
 
+/* Admin Editor Active Field Highlight when clicked from Preview */
+.cms-editor-highlight {
+  outline: 3px solid #1240ab !important;
+  outline-offset: 4px;
+  border-radius: 12px;
+  background-color: #f0f5ff !important;
+  animation: editorHighlightPulse 1.8s ease-out forwards;
+  transition: all 0.2s ease;
+}
+
+@keyframes editorHighlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(18, 64, 171, 0.7);
+    background-color: #e8f0fe;
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(18, 64, 171, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(18, 64, 171, 0);
+  }
+}
+
+/* Embedded preview hover styling for editable elements */
+.cms-embedded-preview [data-cms-key],
+.cms-embedded-preview [data-cms-item],
+.cms-embedded-preview [data-cms-href] {
+  cursor: pointer;
+  transition: outline 0.15s ease, background-color 0.15s ease;
+}
+
+.cms-embedded-preview [data-cms-key]:hover,
+.cms-embedded-preview [data-cms-item]:hover,
+.cms-embedded-preview [data-cms-href]:hover {
+  outline: 2px dashed rgba(255, 183, 3, 0.85);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+
 
 
 

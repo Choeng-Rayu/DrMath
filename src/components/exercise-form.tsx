@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { getDriveImage } from "@/lib/drive";
 import { saveExerciseAction } from "@/app/admin/actions";
 import { SubmitButton } from "@/components/submit-button";
+import { DriveImageUploader } from "@/components/drive-image-uploader";
 
 type ExerciseValues = {
   id?: string;
@@ -29,50 +30,15 @@ export function ExerciseForm({ initial, title = "បន្ថែមលំហា�
         {initial?.id && <input type="hidden" name="id" value={initial.id} />}
         <div className="field-grid">
           <div className="field field-wide">
-            <label htmlFor={`drive-${initial?.id ?? "new"}`}>តំណរូបភាព Google Drive (លំហាត់ / វិញ្ញាសា)</label>
-            <input
-              className="input"
+            <label htmlFor={`drive-${initial?.id ?? "new"}`}>រូបភាពលំហាត់ / វិញ្ញាសា</label>
+            <DriveImageUploader
               id={`drive-${initial?.id ?? "new"}`}
               name="driveUrl"
-              value={driveUrl}
-              onChange={(event) => setDriveUrl(event.target.value)}
-              placeholder="https://drive.google.com/file/d/.../view"
+              defaultValue={initial?.driveUrl ?? ""}
+              onChangeUrl={(url) => setDriveUrl(url)}
               required
             />
-            <p className="help">
-              សូមប្រាកដថាកំណត់សិទ្ធិក្នុង Google Drive ជា <strong>Anyone with the link (អ្នកមានតំណអាចមើលបាន)</strong>។
-            </p>
           </div>
-
-          {driveUrl && !driveImg && (
-            <p className="error field-wide">
-              តំណនេះមិនមែនជាតំណ Google Drive ដែលមានលេខសម្គាល់ឯកសារត្រឹមត្រូវទេ។
-            </p>
-          )}
-
-          {driveImg && (
-            <div className="field field-wide">
-              <label>រូបភាពមើលជាមុន</label>
-              <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", gap: "1rem", alignItems: "center" }}>
-                <img
-                  src={driveImg.renderUrl}
-                  alt="រូបភាពលំហាត់ Google Drive"
-                  referrerPolicy="no-referrer"
-                  style={{
-                    width: 180,
-                    height: 120,
-                    objectFit: "cover",
-                    borderRadius: 8,
-                    border: "1px solid #ccd5e5",
-                    background: "#f0f4f9",
-                  }}
-                />
-                <p className="success">
-                  ✓ តំណរូបភាព Google Drive ត្រឹមត្រូវ។ រូបភាពនេះនឹងបង្ហាញនៅលើគេហទំព័រ។
-                </p>
-              </div>
-            </div>
-          )}
 
           <div className="field field-wide">
             <label htmlFor={`title-${initial?.id ?? "new"}`}>ចំណងជើងលំហាត់ / វិញ្ញាសា</label>

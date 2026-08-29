@@ -25,8 +25,8 @@ const RICH_PLAIN_KEYS = new Set([
 ]);
 
 // Receives live keystrokes and focus events from the admin editor iframe parent,
-// applies them to the preview DOM in real-time, and auto-scrolls to the active section/element.
-export function PreviewBridge() {
+// applies them to the preview DOM in real-time, and enables click-to-edit to sync back to the editor.
+export function PreviewBridge({ embedded = false }: { embedded?: boolean }) {
   const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -64,7 +64,6 @@ export function PreviewBridge() {
 
       // 4. Perform smooth scroll and visual highlight
       if (target) {
-        // Find if target is a small inline or a whole section
         const isSection = target.tagName === "SECTION" || target.tagName === "HEADER" || target.tagName === "FOOTER";
         target.scrollIntoView({
           behavior: "smooth",
@@ -90,6 +89,7 @@ export function PreviewBridge() {
       }
     };
 
+    // Listen for incoming live updates and scroll commands from the parent editor
     const onMessage = (event: MessageEvent) => {
       const message = event.data as PreviewMessage;
       if (!message || (message.type !== "cms-preview" && message.type !== "cms-preview-scroll")) {
@@ -174,7 +174,61 @@ export function PreviewBridge() {
       }
     };
 
+    // Click-to-edit: when admin clicks any text, image, or section in preview, notify parent editor to focus it
+    const onPreviewClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target) return;
+
+      // Find closest element with cms metadata
+      const keyEl = target.closest<HTMLElement>("[data-cms-key], [data-cms-href], [data-cms-item]");
+      const key = keyEl?.dataset.cmsKey || keyEl?.dataset.cmsHref || keyEl?.dataset.cmsItem;
+
+      const sectionEl = target.closest<HTMLElement>("[data-cms-section]");
+      const section = sectionEl?.dataset.cmsSection || (key?.includes(".") ? key.split(".")[0] : undefined);
+
+      if (key || section) {
+        // Prevent default navigation for internal links in preview when clicking to edit
+        if (target.closest("a") || target.closest("button")) {
+          // Allow lightbox close/navigation buttons if needed, otherwise prevent default
+          const isLightboxControl = target.closest(".lightbox-controls, .lightbox-nav-btns");
+          if (!isLightboxControl) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }
+
+        // Highlight in preview immediately
+        const highlightTarget = keyEl || sectionEl || target;
+        document.querySelectorAll(".cms-preview-highlight").forEach((el) => {
+          el.classList.remove("cms-preview-highlight");
+        });
+        highlightTarget.classList.add("cms-preview-highlight");
+        if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
+        highlightTimeoutRef.current = setTimeout(() => {
+          highlightTarget.classList.remove("cms-preview-highlight");
+        }, 1800);
+
+        // Send message to parent editor
+        try {
+          window.parent?.postMessage(
+            {
+              type: "cms-preview-click",
+              key,
+              section,
+            },
+            "*"
+          );
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
     window.addEventListener("message", onMessage);
+    if (embedded || window.parent !== window) {
+      document.addEventListener("click", onPreviewClick, true);
+    }
+
     try {
       window.parent?.postMessage({ type: "cms-preview-ready" }, "*");
     } catch {
@@ -183,9 +237,10 @@ export function PreviewBridge() {
 
     return () => {
       window.removeEventListener("message", onMessage);
+      document.removeEventListener("click", onPreviewClick, true);
       if (highlightTimeoutRef.current) clearTimeout(highlightTimeoutRef.current);
     };
-  }, []);
+  }, [embedded]);
 
   return null;
 }

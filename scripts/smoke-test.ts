@@ -33,4 +33,12 @@ assert.equal(
   '&lt;script&gt;alert(&quot;hack&quot;)&lt;/script&gt;<strong>Clean</strong>'
 );
 
-console.log("All CMS and Preview smoke tests passed successfully.");
+import { isGoogleDriveConfigured } from "../src/lib/google-drive";
+
+// Check Google Drive configuration status returns expected schema
+const driveConfig = isGoogleDriveConfigured();
+assert.equal(typeof driveConfig.configured, "boolean");
+assert.ok(Array.isArray(driveConfig.missing));
+
+console.log("All CMS, Drive, and Preview smoke tests passed successfully.");
+

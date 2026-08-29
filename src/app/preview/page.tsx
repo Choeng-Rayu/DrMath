@@ -22,7 +22,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
   const data = await getPreviewData();
 
   return (
-    <div className="preview-page">
+    <div className={`preview-page ${isEmbedded ? "cms-embedded-preview" : ""}`}>
       {!isEmbedded && (
         <div className="preview-bar">
           <strong>មើលជាមុនការកែប្រែ</strong>
@@ -33,7 +33,7 @@ export default async function PreviewPage({ searchParams }: PreviewPageProps) {
         </div>
       )}
       <HomepageView {...data} />
-      <PreviewBridge />
+      <PreviewBridge embedded={isEmbedded} />
     </div>
   );
 }

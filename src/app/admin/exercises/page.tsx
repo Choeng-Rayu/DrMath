@@ -17,7 +17,7 @@ export default async function ExercisesPage({ searchParams }: ExercisesPageProps
         <div>
           <h1 className="display admin-title">លំហាត់ &amp; វិញ្ញាសា</h1>
           <p className="admin-note">
-            បិទភ្ជាប់តំណរូបភាព Google Drive ដើម្បីផ្សាយលំហាត់ និងវិញ្ញាសាសម្រាប់សិស្សទាញយក និងអនុវត្ត។
+            ផ្ទុករូបភាពឡើងដោយផ្ទាល់ (Auto Google Drive) ឬបិទភ្ជាប់តំណ Google Drive ដើម្បីផ្សាយលំហាត់ និងវិញ្ញាសា។
           </p>
         </div>
         <Link href="/preview" target="_blank" rel="noreferrer" className="button button-secondary button-small">

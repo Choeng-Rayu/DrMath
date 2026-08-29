@@ -52,14 +52,24 @@ Never commit `.env`, passwords, database URLs, or the authentication secret. The
 
 ## Google Drive image workflow
 
-The initial website does **not** upload image bytes to Vercel or require source-code changes. To publish a logo, hero photo, or other site image, the administrator follows this process.
+DR.MATHS supports two ways to add images (for exercises, site banner, about section, and logo):
 
-1. Upload the image to the dedicated DR.MATHS Google Drive folder.
-2. In Drive, set the individual file’s access to **Anyone with the link**.
-3. Copy its Drive sharing URL, for example `https://drive.google.com/file/d/FILE_ID/view`.
-4. Paste the URL into the relevant CMS image field. The CMS extracts the file ID and renders a preview before the form is saved.
+### 1. Automatic Direct Upload (Recommended)
+Inside the `/admin` dashboard (such as `/admin/exercises`), administrators can drag-and-drop or select an image file directly from their device. The system:
+- Streams the image to your designated Google Drive folder via the Google Drive API.
+- Automatically sets permissions to **Anyone with the link can view** (`role: reader`, `type: anyone`).
+- Generates the direct preview thumbnail URL and attaches it to the exercise or content.
 
-The public website loads the Drive image directly rather than proxying it through Vercel, which keeps the initial deployment lightweight. Google Drive is suitable for the requested free initial workflow, but it is not a content-delivery network; if the site becomes heavily used or an image stops serving, migrate the affected images to a storage/CDN service such as Supabase Storage without changing the page architecture.
+To enable automated uploads, configure the following Google Cloud Service Account variables in `.env`:
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`: The Service Account email from Google Cloud Console.
+- `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`: The RSA private key from the downloaded service account JSON.
+- `GOOGLE_DRIVE_FOLDER_ID`: The ID of the Google Drive folder shared with the Service Account as *Editor*.
+
+### 2. Manual Drive Link Fallback
+If direct upload is not configured or an admin already has an image on Google Drive:
+1. Upload the image to Google Drive manually and set access to **Anyone with the link**.
+2. Switch to the **Paste Link** tab and paste `https://drive.google.com/file/d/FILE_ID/view`.
+3. The system extracts the file ID and renders the image preview automatically.
 
 ## YouTube series workflow
 
