@@ -38,9 +38,10 @@ async function testDriveConnection() {
     }
 
     console.log("\n🎉 Your Google Drive integration is 100% READY! Image uploads will now work perfectly.");
-  } catch (err: any) {
-    console.error("\n❌ Authentication failed:", err.message);
-    if (err.message.includes("unauthorized_client")) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("\n❌ Authentication failed:", message);
+    if (message.includes("unauthorized_client")) {
       console.error("👉 Reason: The Refresh Token was created with a different Client ID. Please regenerate the Refresh Token in OAuth Playground with 'Use your own OAuth credentials' checked.");
     }
   }

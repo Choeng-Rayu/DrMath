@@ -9,6 +9,15 @@ import { auth, signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { getDriveImage } from "@/lib/drive";
 import { getYouTubeId, getYouTubeThumbnail } from "@/lib/youtube";
+import {
+  syncExercisesToSheet,
+  syncContentToSheet,
+  syncVideosToSheet,
+  syncSubjectsToSheet,
+  syncTestimonialsToSheet,
+  syncSettingsToSheet,
+  syncAllToGoogleSheets,
+} from "@/lib/google-sheets";
 
 const optionalUrl = z.union([z.string().url(), z.literal("")]);
 
@@ -127,6 +136,7 @@ export async function publishContentAction() {
   refreshPublic();
   revalidatePath("/preview");
   revalidatePath("/admin/content");
+  syncContentToSheet().catch(console.warn);
   redirect("/admin/content?success=published");
 }
 
@@ -229,6 +239,7 @@ export async function saveSettingsAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/settings");
+  syncSettingsToSheet().catch(console.warn);
   redirect("/admin/settings?success=saved");
 }
 
@@ -281,6 +292,7 @@ export async function saveVideoAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/videos");
+  syncVideosToSheet().catch(console.warn);
   redirect("/admin/videos?success=saved");
 }
 
@@ -295,6 +307,7 @@ export async function deleteVideoAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/videos");
+  syncVideosToSheet().catch(console.warn);
   redirect("/admin/videos?success=deleted");
 }
 
@@ -329,6 +342,7 @@ export async function saveSubjectAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/subjects");
+  syncSubjectsToSheet().catch(console.warn);
   redirect("/admin/subjects?success=saved");
 }
 
@@ -343,6 +357,7 @@ export async function deleteSubjectAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/subjects");
+  syncSubjectsToSheet().catch(console.warn);
   redirect("/admin/subjects?success=deleted");
 }
 
@@ -380,6 +395,7 @@ export async function saveTestimonialAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/testimonials");
+  syncTestimonialsToSheet().catch(console.warn);
   redirect("/admin/testimonials?success=saved");
 }
 
@@ -394,6 +410,7 @@ export async function deleteTestimonialAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/testimonials");
+  syncTestimonialsToSheet().catch(console.warn);
   redirect("/admin/testimonials?success=deleted");
 }
 
@@ -463,6 +480,7 @@ export async function saveExerciseAction(formData: FormData) {
 
   refreshPublic();
   revalidatePath("/admin/exercises");
+  syncExercisesToSheet().catch(console.warn);
   redirect("/admin/exercises?success=saved");
 }
 
@@ -477,5 +495,23 @@ export async function deleteExerciseAction(formData: FormData) {
   }
   refreshPublic();
   revalidatePath("/admin/exercises");
+  syncExercisesToSheet().catch(console.warn);
   redirect("/admin/exercises?success=deleted");
 }
+
+export async function syncAllToGoogleSheetsAction() {
+  await requireAdmin();
+  try {
+    const res = await syncAllToGoogleSheets();
+    if (!res.success) {
+      redirect("/admin?error=sheets_sync_failed");
+    }
+  } catch (error) {
+    console.error("[syncAllToGoogleSheetsAction]", error);
+    redirect("/admin?error=sheets_sync_failed");
+  }
+  refreshPublic();
+  revalidatePath("/admin");
+  redirect("/admin?success=sheets_synced");
+}
+

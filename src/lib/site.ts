@@ -118,6 +118,8 @@ const fallbackSettings = {
   seoDescriptionKh: "ថ្នាក់បង្រៀន គណិតវិទ្យា រូបវិទ្យា គីមីវិទ្យា ជីវវិទ្យា និងភាសាខ្មែរ។",
 };
 
+import { fetchAllFromGoogleSheets } from "@/lib/google-sheets";
+
 // Cached per request so generateMetadata and the page body share one snapshot
 // of the database instead of reading it twice.
 export const getSiteData = cache(async function getSiteData() {
@@ -149,7 +151,35 @@ export const getSiteData = cache(async function getSiteData() {
       };
     });
   } catch (error) {
-    console.error("[getSiteData] fallback to static snapshot:", error);
+    console.warn("[getSiteData] Database unreachable. Attempting Google Sheets failover...", error);
+    try {
+      const sheetData = await fetchAllFromGoogleSheets();
+      if (sheetData) {
+        const content = { ...fallbackContent, ...Object.fromEntries(sheetData.contents.map((row) => [row.key, row.value])) };
+        const hiddenKeys = sheetData.contents.filter((row) => !row.visible).map((row) => row.key);
+        let phones = fallbackSettings.phones;
+        try { phones = sheetData.settings?.phones ? JSON.parse(sheetData.settings.phones) : phones; } catch { /* fallback */ }
+
+        const visibleSubjects = sheetData.subjects.filter((s) => s.visible);
+        const visibleTestimonials = sheetData.testimonials.filter((t) => t.visible);
+        const publishedVideos = sheetData.videos.filter((v) => v.published);
+        const publishedExercises = sheetData.exercises.filter((e) => e.published);
+
+        console.log("✓ [getSiteData] Successfully loaded data from Google Sheets failover!");
+        return {
+          content,
+          hiddenKeys,
+          settings: { ...sheetData.settings, phones },
+          subjects: visibleSubjects.length ? visibleSubjects : fallbackSubjects,
+          testimonials: visibleTestimonials.length ? visibleTestimonials : fallbackTestimonials,
+          videos: publishedVideos,
+          exercises: publishedExercises.length ? publishedExercises : fallbackExercises,
+        };
+      }
+    } catch (sheetErr) {
+      console.error("[getSiteData] Google Sheets failover also failed:", sheetErr);
+    }
+
     return {
       content: fallbackContent,
       hiddenKeys: [] as string[],
@@ -197,7 +227,29 @@ export const getPreviewData = cache(async function getPreviewData() {
       };
     });
   } catch (error) {
-    console.error("[getPreviewData] fallback to static snapshot:", error);
+    console.warn("[getPreviewData] Database unreachable. Attempting Google Sheets failover...", error);
+    try {
+      const sheetData = await fetchAllFromGoogleSheets();
+      if (sheetData) {
+        const content = { ...fallbackContent, ...Object.fromEntries(sheetData.contents.map((row) => [row.key, row.draftValue ?? row.value])) };
+        const hiddenKeys = sheetData.contents.filter((row) => !(row.draftVisible ?? row.visible)).map((row) => row.key);
+        let phones = fallbackSettings.phones;
+        try { phones = sheetData.settings?.phones ? JSON.parse(sheetData.settings.phones) : phones; } catch { /* fallback */ }
+
+        return {
+          content,
+          hiddenKeys,
+          settings: { ...sheetData.settings, phones },
+          subjects: sheetData.subjects.length ? sheetData.subjects : fallbackSubjects,
+          testimonials: sheetData.testimonials.length ? sheetData.testimonials : fallbackTestimonials,
+          videos: sheetData.videos,
+          exercises: sheetData.exercises.length ? sheetData.exercises : fallbackExercises,
+        };
+      }
+    } catch (sheetErr) {
+      console.error("[getPreviewData] Google Sheets failover also failed:", sheetErr);
+    }
+
     return {
       content: fallbackContent,
       hiddenKeys: [] as string[],
@@ -225,7 +277,15 @@ export async function getAdminData() {
       return { contents, settings, subjects, testimonials, videos, exercises };
     });
   } catch (error) {
-    console.error("[getAdminData] database error, using fallbacks:", error);
+    console.warn("[getAdminData] Database unreachable. Attempting Google Sheets failover...", error);
+    try {
+      const sheetData = await fetchAllFromGoogleSheets();
+      if (sheetData) {
+        return sheetData;
+      }
+    } catch (sheetErr) {
+      console.error("[getAdminData] Google Sheets failover error:", sheetErr);
+    }
     return { contents: [], settings: null, subjects: [], testimonials: [], videos: [], exercises: [] };
   }
 }

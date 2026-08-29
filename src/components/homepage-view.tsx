@@ -1,4 +1,4 @@
-import { BookOpen, ExternalLink, MapPin, Phone, Send, Sparkles } from "lucide-react";
+import { BookOpen, Clock, ExternalLink, MapPin, Phone, Send, Sparkles } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
 import { ExerciseSection, type ExerciseItem } from "@/components/exercise-section";
 import type { ContentMap } from "@/lib/site";
@@ -58,7 +58,10 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
       <div className="topbar" id="topbar" data-cms-section="settings">
         <div className="container topbar-inner">
           <div className="topbar-links" data-cms-key="settings.phones">
-            <span>☎ {settings.phones.join(" / ")}</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: ".4rem" }}>
+              <Phone size={13} aria-hidden="true" />
+              <span>{settings.phones.join(" / ")}</span>
+            </span>
             {settings.telegramUrl && <a href={settings.telegramUrl} {...external(settings.telegramUrl)}>Telegram</a>}
           </div>
           <div className="social-links" aria-label="បណ្តាញសង្គម">
@@ -355,10 +358,40 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
             </a>
           </div>
           <aside className="contact-card">
-            <h3 style={{ marginTop: 0 }}>ព័ត៌មានទំនាក់ទំនង</h3>
-            <p><Phone size={16} aria-hidden="true" style={{ verticalAlign: "middle" }} /> {settings.phones.join(" / ")}</p>
-            <p><MapPin size={16} aria-hidden="true" style={{ verticalAlign: "middle" }} /> {settings.addressKh}</p>
-            <p>⏰ {settings.hoursKh}</p>
+            <h3>ព័ត៌មានទំនាក់ទំនង</h3>
+
+            {settings.phones.length > 0 && (
+              <div className="contact-item" data-cms-key="settings.phones">
+                <div className="contact-item-icon" aria-hidden="true">
+                  <Phone size={18} />
+                </div>
+                <div className="contact-item-text">
+                  <span>{settings.phones.join(" / ")}</span>
+                </div>
+              </div>
+            )}
+
+            {settings.addressKh && (
+              <div className="contact-item" data-cms-key="settings.addressKh">
+                <div className="contact-item-icon" aria-hidden="true">
+                  <MapPin size={18} />
+                </div>
+                <div className="contact-item-text">
+                  <span>{settings.addressKh}</span>
+                </div>
+              </div>
+            )}
+
+            {settings.hoursKh && (
+              <div className="contact-item" data-cms-key="settings.hoursKh">
+                <div className="contact-item-icon" aria-hidden="true">
+                  <Clock size={18} />
+                </div>
+                <div className="contact-item-text">
+                  <span>{settings.hoursKh}</span>
+                </div>
+              </div>
+            )}
           </aside>
         </div>
       </section>

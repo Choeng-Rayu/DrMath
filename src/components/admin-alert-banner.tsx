@@ -9,6 +9,7 @@ const errorMessages: Record<string, string> = {
   delete: "មានបញ្ហាពេលលុប។ សូមព្យាយាមម្តងទៀត។",
   save: "មានបញ្ហាពេលរក្សាទុក។ សូមព្យាយាមម្តងទៀត។",
   CredentialsSignin: "អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវទេ។",
+  sheets_sync_failed: "មិនអាចធ្វើសមកាលកម្មទៅ Google Sheet បានទេ។ សូមពិនិត្យមើល Google Sheets API ក្នុង Google Cloud។",
 };
 
 const successMessages: Record<string, string> = {
@@ -19,6 +20,7 @@ const successMessages: Record<string, string> = {
   published: "បានផ្សាយខ្លឹមសារទៅកាន់គេហទំព័រសាធារណៈដោយជោគជ័យ!",
   draft_saved: "បានរក្សាទុកសេចក្តីព្រាងដោយជោគជ័យ! អ្នកអាចមើលជាមុនបាន។",
   discarded: "បានបោះបង់ការកែប្រែសេចក្តីព្រាងរួចរាល់។",
+  sheets_synced: "បានធ្វើសមកាលកម្មទិន្នន័យទាំងអស់ទៅ Google Sheet ក្នុង Google Drive ដោយជោគជ័យ!",
   true: "ប្រតិបត្តិការបានជោគជ័យ!",
 };
 
