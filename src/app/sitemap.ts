@@ -63,7 +63,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
-  // 1. Primary Root Domain (Landing Page) - Highest Priority
+  // Primary Canonical Landing Page — contains all page images and all video metadata
   sitemapEntries.push({
     url: `${baseUrl}`,
     lastModified: currentDate,
@@ -71,106 +71,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 1.0,
     images: allCoreImages,
     videos: videoMetadataList.length > 0 ? videoMetadataList : undefined,
-  });
-
-  // 2. Navigation Bar: Video Search & Lessons Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#videos`,
-    lastModified: currentDate,
-    changeFrequency: "daily",
-    priority: 0.9,
-    images: videoThumbnails.length > 0 ? videoThumbnails : [heroImageUrl],
-    videos: videoMetadataList.length > 0 ? videoMetadataList : undefined,
-  });
-
-  // 3. Navigation Bar: Exercises & Worksheets Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#exercises`,
-    lastModified: currentDate,
-    changeFrequency: "daily",
-    priority: 0.9,
-    images: exerciseImages.length > 0 ? exerciseImages : [heroImageUrl],
-  });
-
-  // 4. Navigation Bar: Subjects & Curriculum Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#subjects`,
-    lastModified: currentDate,
-    changeFrequency: "weekly",
-    priority: 0.8,
-    images: [heroImageUrl, logoUrl],
-  });
-
-  // 5. Navigation Bar: About Us Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#about`,
-    lastModified: currentDate,
-    changeFrequency: "weekly",
-    priority: 0.8,
-    images: [aboutImageUrl, heroImageUrl],
-  });
-
-  // 6. Navigation Bar: Learning Formats Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#formats`,
-    lastModified: currentDate,
-    changeFrequency: "monthly",
-    priority: 0.7,
-    images: [heroImageUrl],
-  });
-
-  // 7. Navigation Bar: Contact & Registration Section
-  sitemapEntries.push({
-    url: `${baseUrl}/#contact`,
-    lastModified: currentDate,
-    changeFrequency: "monthly",
-    priority: 0.8,
-    images: [logoUrl],
-  });
-
-  // 8. Individual Exercises (Searchable Worksheet Entries with Deep Links)
-  exercises.forEach((exercise) => {
-    const exImageUrl = exercise.renderUrl.startsWith("http")
-      ? exercise.renderUrl
-      : ensureAbsoluteUrl(exercise.renderUrl, baseUrl);
-
-    sitemapEntries.push({
-      url: `${baseUrl}/#exercise-${exercise.id}`,
-      lastModified: (exercise as { updatedAt?: Date }).updatedAt || currentDate,
-      changeFrequency: "weekly",
-      priority: exercise.featured ? 0.85 : 0.75,
-      images: [exImageUrl],
-    });
-  });
-
-  // 9. Individual Video Lessons (Searchable Video Entries with Deep Links)
-  videos.forEach((video) => {
-    const thumb = video.thumbUrl || getYouTubeThumbnail(video.youtubeId);
-    sitemapEntries.push({
-      url: `${baseUrl}/#video-${video.youtubeId}`,
-      lastModified: (video as { updatedAt?: Date }).updatedAt || currentDate,
-      changeFrequency: "weekly",
-      priority: video.featured ? 0.85 : 0.75,
-      images: [thumb],
-      videos: [
-        {
-          title: `${video.titleKh} | លោកគ្រូ គរ សម្បត្តិ (Korm Sambath)`,
-          thumbnail_loc: thumb,
-          description:
-            video.seriesKh ||
-            content["videos.description"] ||
-            "មេរៀនគណិតវិទ្យា និងវិទ្យាសាស្ត្របង្រៀនដោយលោកគ្រូ គរ សម្បត្តិ (Korm Sambath) នៅ DR.MATHS",
-          player_loc: getYouTubeEmbed(video.youtubeId),
-          publication_date: (video as { createdAt?: Date }).createdAt?.toISOString() || currentDate.toISOString(),
-          family_friendly: "yes" as const,
-          uploader: {
-            info: `${baseUrl}/#about`,
-            content: "Korm Sambath (លោកគ្រូ គរ សម្បត្តិ)",
-          },
-          tag: "Korm Sambath, គរ សម្បត្តិ, DR.MATHS, គណិតវិទ្យា",
-        },
-      ],
-    });
   });
 
   return sitemapEntries;
