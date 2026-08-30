@@ -34,8 +34,8 @@ export function getDriveImage(input: string): DriveImage | null {
   return {
     originalUrl,
     fileId,
-    // A direct thumbnail endpoint avoids routing image bytes through Vercel.
-    renderUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`,
+    // Direct Google CDN URL — no redirect, no auth cookie needed for public files.
+    renderUrl: `https://lh3.googleusercontent.com/d/${fileId}=s1600`,
   };
 }
 

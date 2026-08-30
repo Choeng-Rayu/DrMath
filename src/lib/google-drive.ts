@@ -134,21 +134,20 @@ export async function uploadImageToGoogleDrive({
   }
 
   // 3. Set public read permission ("Anyone with the link can view")
-  try {
-    await drive.permissions.create({
-      fileId,
-      supportsAllDrives: true,
-      requestBody: {
-        role: "reader",
-        type: "anyone",
-      },
-    });
-  } catch (permError) {
-    console.warn("[uploadImageToGoogleDrive] Warning: Could not set public permission on Drive file:", permError);
-  }
+  // This MUST succeed — without it the renderUrl thumbnail will be private and broken.
+  await drive.permissions.create({
+    fileId,
+    supportsAllDrives: true,
+    requestBody: {
+      role: "reader",
+      type: "anyone",
+    },
+  });
 
   const driveUrl = `https://drive.google.com/file/d/${fileId}/view`;
-  const renderUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`;
+  // Use the direct Google CDN URL — avoids the thumbnail redirect and works
+  // for all publicly shared files without extra round-trips.
+  const renderUrl = `https://lh3.googleusercontent.com/d/${fileId}=s1600`;
 
   return {
     success: true,

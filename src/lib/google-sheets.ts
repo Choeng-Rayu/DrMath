@@ -502,7 +502,7 @@ export async function fetchAllFromGoogleSheets() {
         gradeKh: r.gradeKh || null,
         driveUrl: r.driveUrl || "",
         driveFileId: r.driveFileId || "",
-        renderUrl: r.renderUrl || (r.driveFileId ? `https://drive.google.com/thumbnail?id=${r.driveFileId}&sz=w1600` : ""),
+        renderUrl: r.renderUrl || (r.driveFileId ? `https://lh3.googleusercontent.com/d/${r.driveFileId}=s1600` : ""),
         solutionUrl: r.solutionUrl || null,
         order: Number(r.order) || 0,
         published: r.published === "TRUE" || r.published === "true" || r.published === "1",
