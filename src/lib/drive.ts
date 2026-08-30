@@ -4,7 +4,11 @@ export type DriveImage = {
   originalUrl: string;
   fileId: string;
   renderUrl: string;
+  previewUrl: string;
+  downloadUrl: string;
 };
+
+export type DriveFile = DriveImage;
 
 export function getDriveImage(input: string): DriveImage | null {
   const originalUrl = input.trim();
@@ -34,11 +38,23 @@ export function getDriveImage(input: string): DriveImage | null {
   return {
     originalUrl,
     fileId,
-    // Direct Google CDN URL — no redirect, no auth cookie needed for public files.
-    renderUrl: `https://lh3.googleusercontent.com/d/${fileId}=s1600`,
+    // Direct Google CDN / Thumbnail URL (generates preview image for both Images and PDFs)
+    renderUrl: `https://drive.google.com/thumbnail?id=${fileId}&sz=w1600`,
+    // Interactive Google Drive embedded preview URL
+    previewUrl: `https://drive.google.com/file/d/${fileId}/preview`,
+    // Direct download link
+    downloadUrl: `https://drive.google.com/uc?export=download&id=${fileId}`,
   };
 }
 
+export function getDriveFile(input: string): DriveFile | null {
+  return getDriveImage(input);
+}
+
 export function isDriveImageUrl(input: string) {
+  return getDriveImage(input) !== null;
+}
+
+export function isDriveFileUrl(input: string) {
   return getDriveImage(input) !== null;
 }

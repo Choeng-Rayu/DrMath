@@ -28,7 +28,7 @@ export function getYouTubeId(input: string): string | null {
 }
 
 export function getYouTubeThumbnail(videoId: string) {
-  return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 }
 
 export function getYouTubeEmbed(videoId: string) {

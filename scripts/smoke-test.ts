@@ -20,7 +20,7 @@ for (const url of [
   assert.equal(getYouTubeId(url), expectedVideoId, `Expected to parse ${url}`);
 }
 assert.equal(getYouTubeId("https://vimeo.com/1234"), null, "Non-YouTube video links must be rejected");
-assert.equal(getYouTubeThumbnail(expectedVideoId), `https://i.ytimg.com/vi/${expectedVideoId}/hqdefault.jpg`);
+assert.equal(getYouTubeThumbnail(expectedVideoId), `https://img.youtube.com/vi/${expectedVideoId}/hqdefault.jpg`);
 
 // Rich text & plain text tests
 assert.equal(plain("Hello <strong>World</strong>"), "Hello World");

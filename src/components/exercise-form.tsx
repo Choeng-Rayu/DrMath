@@ -30,7 +30,7 @@ export function ExerciseForm({ initial, title = "បន្ថែមលំហា�
         {initial?.id && <input type="hidden" name="id" value={initial.id} />}
         <div className="field-grid">
           <div className="field field-wide">
-            <label htmlFor={`drive-${initial?.id ?? "new"}`}>រូបភាពលំហាត់ / វិញ្ញាសា</label>
+            <label htmlFor={`drive-${initial?.id ?? "new"}`}>ឯកសារលំហាត់ / វិញ្ញាសា (រូបភាព JPG/PNG ឬ PDF)</label>
             <DriveImageUploader
               id={`drive-${initial?.id ?? "new"}`}
               name="driveUrl"

@@ -342,7 +342,64 @@ section[id] { scroll-margin-top: 5.25rem; }
 .lightbox-image { max-width: 100%; max-height: min(72vh, 700px); object-fit: contain; border-radius: 6px; box-shadow: 0 12px 35px rgba(0,0,0,0.6); user-select: none; }
 .lightbox-footer { display: flex; justify-content: space-between; align-items: center; padding: .75rem 1.25rem; border-top: 1px solid #e2e8f0; background: #f8fafc; gap: 1rem; flex-wrap: wrap; }
 .lightbox-nav-btns { display: flex; align-items: center; gap: .6rem; }
-.lightbox-actions-right { display: flex; align-items: center; gap: .5rem; }
+.lightbox-actions-right { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+
+/* PDF Badges and Interactive Iframe Reader */
+.exercise-badge-pdf {
+  position: absolute;
+  top: .65rem;
+  left: .65rem;
+  background: #dc2626;
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: .22rem .55rem;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.exercise-pdf-iframe {
+  width: 100%;
+  height: min(78vh, 750px);
+  border: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.lightbox-mode-toggle {
+  display: inline-flex;
+  background: #e2e8f0;
+  padding: 3px;
+  border-radius: 8px;
+  gap: 3px;
+}
+
+.lightbox-mode-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: #475569;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lightbox-mode-btn.active {
+  background: #ffffff;
+  color: #1240ab;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
 
 @keyframes spin {
   from { transform: rotate(0deg); }

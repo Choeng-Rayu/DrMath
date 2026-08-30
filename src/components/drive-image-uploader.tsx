@@ -32,7 +32,7 @@ export function DriveImageUploader({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Parse Drive image info if a valid Drive URL exists
+  // Parse Drive file info if a valid Drive URL exists
   const driveImg = useMemo(() => getDriveImage(driveUrl), [driveUrl]);
 
   const handleUrlChange = (newUrl: string) => {
@@ -43,13 +43,16 @@ export function DriveImageUploader({
   };
 
   const uploadFile = async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      setErrorMessage("សូមជ្រើសរើសឯកសារដែលជារូបភាព (JPG, PNG, WEBP, GIF, SVG)។");
+    const isImage = file.type.startsWith("image/");
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isImage && !isPdf) {
+      setErrorMessage("សូមជ្រើសរើសឯកសារដែលជារូបភាព (JPG, PNG, WEBP, GIF) ឬឯកសារ PDF។");
       return;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      setErrorMessage("ទំហំរូបភាពធំពេក (លើសពី 20MB)។ សូមបន្ថយទំហំរូបភាពមុនផ្ទុកឡើង។");
+    if (file.size > 50 * 1024 * 1024) {
+      setErrorMessage("ទំហំឯកសារធំពេក (លើសពី 50MB)។ សូមបន្ថយទំហំឯកសារមុនផ្ទុកឡើង។");
       return;
     }
 
@@ -69,14 +72,18 @@ export function DriveImageUploader({
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "ការផ្ទុករូបភាពឡើង Google Drive បានបរាជ័យ។");
+        throw new Error(data.error || "ការផ្ទុកឯកសារឡើង Google Drive បានបរាជ័យ។");
       }
 
       handleUrlChange(data.driveUrl);
-      setSuccessMessage("✓ ផ្ទុករូបភាពឡើង Google Drive និងកំណត់សិទ្ធិមើលជាសាធារណៈជោគជ័យ!");
+      setSuccessMessage(
+        isPdf
+          ? "✓ ផ្ទុកឯកសារ PDF ឡើង Google Drive និងកំណត់សិទ្ធិមើលជាសាធារណៈជោគជ័យ!"
+          : "✓ ផ្ទុករូបភាពឡើង Google Drive និងកំណត់សិទ្ធិមើលជាសាធារណៈជោគជ័យ!"
+      );
     } catch (err) {
       console.error("[DriveImageUploader] Upload failed:", err);
-      const msg = err instanceof Error ? err.message : "មានបញ្ហាក្នុងការផ្ទុករូបភាព។";
+      const msg = err instanceof Error ? err.message : "មានបញ្ហាក្នុងការផ្ទុកឯកសារ។";
       setErrorMessage(msg);
     } finally {
       setIsUploading(false);
@@ -134,7 +141,7 @@ export function DriveImageUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
+        accept="application/pdf,image/jpeg,image/png,image/webp,image/gif,image/svg+xml"
         style={{ display: "none" }}
         onChange={handleFileInputChange}
       />
@@ -169,7 +176,7 @@ export function DriveImageUploader({
           }}
         >
           <Upload size={14} />
-          <span>ផ្ទុករូបភាពឡើង (Auto Upload)</span>
+          <span>ផ្ទុកឡើង (Auto Upload)</span>
         </button>
         <button
           type="button"
@@ -217,7 +224,7 @@ export function DriveImageUploader({
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
               <Loader2 size={32} className="animate-spin" style={{ color: "#1240ab" }} />
               <strong style={{ color: "#1240ab", fontSize: "0.95rem" }}>
-                កំពុងផ្ទុករូបភាពឡើង Google Drive...
+                កំពុងផ្ទុកឯកសារឡើង Google Drive...
               </strong>
               <small style={{ color: "#5b667a" }}>
                 ប្រព័ន្ធកំពុងកំណត់សិទ្ធិមើលជាសាធារណៈ (Anyone with the link) ដោយស្វ័យប្រវត្តិ
@@ -240,10 +247,10 @@ export function DriveImageUploader({
               </div>
               <div>
                 <strong style={{ display: "block", fontSize: "0.95rem", color: "#0a1f44" }}>
-                  ចុចទីនេះដើម្បីជ្រើសរើសរូបភាព ឬ អូសទម្លាក់រូបភាពមកទីនេះ
+                  ចុចទីនេះដើម្បីជ្រើសរើសរូបភាព / ឯកសារ PDF ឬ អូសទម្លាក់មកទីនេះ
                 </strong>
                 <span style={{ fontSize: "0.82rem", color: "#5b667a" }}>
-                  ទ្រទ្រង់ប្រភេទ PNG, JPG, WEBP, GIF (ទំហំអតិបរមា 20MB)
+                  ទ្រទ្រង់ប្រភេទ PDF, PNG, JPG, WEBP, GIF (ទំហំអតិបរមា 50MB)
                 </span>
               </div>
             </>
@@ -320,10 +327,10 @@ export function DriveImageUploader({
             boxShadow: "0 2px 8px rgba(10,31,68,0.04)",
           }}
         >
-          <div style={{ position: "relative", width: "140px", height: "95px" }}>
+          <div style={{ position: "relative", width: "140px", height: "95px", background: "#f8fafc", borderRadius: "8px", overflow: "hidden", display: "grid", placeItems: "center" }}>
             <img
               src={driveImg.renderUrl}
-              alt="រូបភាពមើលជាមុន Google Drive"
+              alt="ឯកសារមើលជាមុន Google Drive"
               referrerPolicy="no-referrer"
               style={{
                 width: "100%",
@@ -331,7 +338,6 @@ export function DriveImageUploader({
                 objectFit: "cover",
                 borderRadius: "8px",
                 border: "1px solid #e2e8f0",
-                background: "#f8fafc",
                 display: "block",
               }}
             />
@@ -340,14 +346,14 @@ export function DriveImageUploader({
           <div style={{ display: "grid", gap: "0.35rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "#17733b", fontSize: "0.85rem", fontWeight: 700 }}>
               <CheckCircle2 size={16} />
-              <span>រូបភាពត្រៀមរួចរាល់សម្រាប់បង្ហាញលើគេហទំព័រ</span>
+              <span>ឯកសារត្រៀមរួចរាល់សម្រាប់បង្ហាញលើគេហទំព័រ</span>
             </div>
             <div style={{ fontSize: "0.78rem", color: "#5b667a", wordBreak: "break-all" }}>
               <strong>Google Drive ID:</strong> {driveImg.fileId}
             </div>
             <div style={{ display: "flex", gap: "0.6rem", marginTop: "0.2rem", flexWrap: "wrap" }}>
               <a
-                href={driveImg.originalUrl}
+                href={driveImg.previewUrl || driveImg.originalUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="button button-outline button-small"
@@ -375,7 +381,7 @@ export function DriveImageUploader({
                 }}
               >
                 <RefreshCw size={12} />
-                <span>ប្តូររូបភាពថ្មី</span>
+                <span>ប្តូរឯកសារថ្មី</span>
               </button>
               <button
                 type="button"

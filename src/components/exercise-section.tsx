@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { ExternalLink, FileText, Maximize2, Send, X, ZoomIn, ZoomOut } from "lucide-react";
+import { ExternalLink, FileText, ImageIcon, Maximize2, Send, X, ZoomIn, ZoomOut, Download } from "lucide-react";
 
 export type ExerciseItem = {
   id: string;
@@ -24,6 +24,11 @@ type ExerciseSectionProps = {
   telegramUrl?: string | null;
 };
 
+function checkIsPdf(exercise: ExerciseItem): boolean {
+  const combined = `${exercise.titleKh} ${exercise.descriptionKh || ""} ${exercise.driveUrl}`.toLowerCase();
+  return combined.includes("pdf") || combined.includes(".pdf");
+}
+
 export function ExerciseSection({
   exercises,
   eyebrow = "លំហាត់ & វិញ្ញាសាអនុវត្ត",
@@ -34,6 +39,7 @@ export function ExerciseSection({
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [activeExerciseIndex, setActiveExerciseIndex] = useState<number | null>(null);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [viewMode, setViewMode] = useState<"image" | "pdf">("image");
 
   // Extract unique filter tags
   const subjects = useMemo(() => {
@@ -52,8 +58,11 @@ export function ExerciseSection({
   const activeExercise = activeExerciseIndex !== null ? filteredExercises[activeExerciseIndex] : null;
 
   const openLightbox = (index: number) => {
+    const ex = filteredExercises[index];
     setActiveExerciseIndex(index);
     setZoomLevel(1);
+    // If it looks like a PDF, default to PDF viewer mode; otherwise image mode
+    setViewMode(ex && checkIsPdf(ex) ? "pdf" : "image");
     document.body.style.overflow = "hidden";
   };
 
@@ -65,17 +74,23 @@ export function ExerciseSection({
 
   const nextExercise = useCallback(() => {
     if (activeExerciseIndex !== null && activeExerciseIndex < filteredExercises.length - 1) {
-      setActiveExerciseIndex(activeExerciseIndex + 1);
+      const nextIndex = activeExerciseIndex + 1;
+      const ex = filteredExercises[nextIndex];
+      setActiveExerciseIndex(nextIndex);
       setZoomLevel(1);
+      setViewMode(ex && checkIsPdf(ex) ? "pdf" : "image");
     }
-  }, [activeExerciseIndex, filteredExercises.length]);
+  }, [activeExerciseIndex, filteredExercises]);
 
   const prevExercise = useCallback(() => {
     if (activeExerciseIndex !== null && activeExerciseIndex > 0) {
-      setActiveExerciseIndex(activeExerciseIndex - 1);
+      const prevIndex = activeExerciseIndex - 1;
+      const ex = filteredExercises[prevIndex];
+      setActiveExerciseIndex(prevIndex);
       setZoomLevel(1);
+      setViewMode(ex && checkIsPdf(ex) ? "pdf" : "image");
     }
-  }, [activeExerciseIndex]);
+  }, [activeExerciseIndex, filteredExercises]);
 
   // Reset active exercise when filter changes to prevent index out-of-bounds
   useEffect(() => {
@@ -143,81 +158,91 @@ export function ExerciseSection({
         {/* Exercises Cards Grid */}
         {filteredExercises.length > 0 ? (
           <div className="exercise-grid">
-            {filteredExercises.map((exercise, index) => (
-              <article className="exercise-card" key={exercise.id}>
-                <div
-                  className="exercise-thumb-wrap"
-                  onClick={() => openLightbox(index)}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`បើកមើលរូបភាពពេញ ${exercise.titleKh}`}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") openLightbox(index);
-                  }}
-                >
-                  <img
-                    src={exercise.renderUrl}
-                    alt={exercise.titleKh}
-                    className="exercise-thumb"
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="exercise-thumb-overlay">
-                    <span className="exercise-zoom-btn">
-                      <Maximize2 size={16} aria-hidden="true" />
-                      <span>ពង្រីកមើលរូបភាព</span>
-                    </span>
-                  </div>
-                  {exercise.gradeKh && <span className="exercise-badge-grade">{exercise.gradeKh}</span>}
-                </div>
+            {filteredExercises.map((exercise, index) => {
+              const isPdfDoc = checkIsPdf(exercise);
+              return (
+                <article className="exercise-card" key={exercise.id}>
+                  <div
+                    className="exercise-thumb-wrap"
+                    onClick={() => openLightbox(index)}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`បើកមើលឯកសារពេញ ${exercise.titleKh}`}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") openLightbox(index);
+                    }}
+                  >
+                    <img
+                      src={exercise.renderUrl}
+                      alt={exercise.titleKh}
+                      className="exercise-thumb"
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="exercise-thumb-overlay">
+                      <span className="exercise-zoom-btn">
+                        <Maximize2 size={16} aria-hidden="true" />
+                        <span>{isPdfDoc ? "អានឯកសារ PDF ពេញ" : "ពង្រីកមើលរូបភាព"}</span>
+                      </span>
+                    </div>
 
-                <div className="exercise-body">
-                  <div className="exercise-tags">
-                    {exercise.subjectKh && <span className="exercise-tag">{exercise.subjectKh}</span>}
-                    {exercise.featured && <span className="exercise-tag exercise-tag-featured">★ លំហាត់សំខាន់</span>}
-                  </div>
-                  <h3 className="exercise-title" title={exercise.titleKh}>
-                    {exercise.titleKh}
-                  </h3>
-                  {exercise.descriptionKh && <p className="exercise-desc">{exercise.descriptionKh}</p>}
+                    {isPdfDoc && (
+                      <span className="exercise-badge-pdf">
+                        <FileText size={11} /> PDF
+                      </span>
+                    )}
 
-                  <div className="exercise-actions">
-                    <button
-                      type="button"
-                      className="button button-primary button-small"
-                      onClick={() => openLightbox(index)}
-                      style={{ flex: 1, justifyContent: "center" }}
-                    >
-                      <Maximize2 size={14} aria-hidden="true" />
-                      <span>មើលលំហាត់</span>
-                    </button>
-                    {exercise.solutionUrl ? (
-                      <a
-                        href={exercise.solutionUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="button button-outline button-small"
-                        title="មើលចម្លើយ ឬដំណោះស្រាយ"
-                      >
-                        <FileText size={14} aria-hidden="true" />
-                        <span>ចម្លើយ</span>
-                      </a>
-                    ) : telegramUrl ? (
-                      <a
-                        href={telegramUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="button button-outline button-small"
-                        title="សួរគ្រូតាម Telegram"
-                      >
-                        <Send size={14} aria-hidden="true" />
-                        <span>សួរគ្រូ</span>
-                      </a>
-                    ) : null}
+                    {exercise.gradeKh && <span className="exercise-badge-grade">{exercise.gradeKh}</span>}
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="exercise-body">
+                    <div className="exercise-tags">
+                      {exercise.subjectKh && <span className="exercise-tag">{exercise.subjectKh}</span>}
+                      {exercise.featured && <span className="exercise-tag exercise-tag-featured">★ លំហាត់សំខាន់</span>}
+                    </div>
+                    <h3 className="exercise-title" title={exercise.titleKh}>
+                      {exercise.titleKh}
+                    </h3>
+                    {exercise.descriptionKh && <p className="exercise-desc">{exercise.descriptionKh}</p>}
+
+                    <div className="exercise-actions">
+                      <button
+                        type="button"
+                        className="button button-primary button-small"
+                        onClick={() => openLightbox(index)}
+                        style={{ flex: 1, justifyContent: "center" }}
+                      >
+                        {isPdfDoc ? <FileText size={14} aria-hidden="true" /> : <Maximize2 size={14} aria-hidden="true" />}
+                        <span>{isPdfDoc ? "អាន PDF ពេញ" : "មើលលំហាត់"}</span>
+                      </button>
+                      {exercise.solutionUrl ? (
+                        <a
+                          href={exercise.solutionUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="button button-outline button-small"
+                          title="មើលចម្លើយ ឬដំណោះស្រាយ"
+                        >
+                          <FileText size={14} aria-hidden="true" />
+                          <span>ចម្លើយ</span>
+                        </a>
+                      ) : telegramUrl ? (
+                        <a
+                          href={telegramUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="button button-outline button-small"
+                          title="សួរគ្រូតាម Telegram"
+                        >
+                          <Send size={14} aria-hidden="true" />
+                          <span>សួរគ្រូ</span>
+                        </a>
+                      ) : null}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="player-empty" style={{ margin: "2rem auto", maxWidth: 460 }}>
@@ -230,7 +255,7 @@ export function ExerciseSection({
         )}
       </div>
 
-      {/* Lightbox / Zoom Modal */}
+      {/* Lightbox / Zoom & PDF Interactive Modal */}
       {activeExercise && (
         <div className="lightbox-backdrop" onClick={closeLightbox} role="dialog" aria-modal="true">
           <div className="lightbox-modal" onClick={(e) => e.stopPropagation()}>
@@ -244,26 +269,59 @@ export function ExerciseSection({
                       {activeExercise.gradeKh}
                     </span>
                   )}
+                  {checkIsPdf(activeExercise) && (
+                    <span className="exercise-tag" style={{ background: "#fee2e2", color: "#b91c1c", fontWeight: 700 }}>
+                      <FileText size={11} style={{ display: "inline", marginRight: "3px" }} /> PDF Document
+                    </span>
+                  )}
                 </div>
-                <h3 style={{ margin: 0, fontSize: "1.1rem" }}>{activeExercise.titleKh}</h3>
+                <h3 style={{ margin: 0, fontSize: "1.05rem" }}>{activeExercise.titleKh}</h3>
               </div>
+
               <div className="lightbox-controls">
-                <button
-                  type="button"
-                  className="lightbox-tool-btn"
-                  onClick={() => setZoomLevel((z) => Math.min(z + 0.3, 3))}
-                  title="ពង្រីក (Zoom in)"
-                >
-                  <ZoomIn size={18} />
-                </button>
-                <button
-                  type="button"
-                  className="lightbox-tool-btn"
-                  onClick={() => setZoomLevel((z) => Math.max(z - 0.3, 0.7))}
-                  title="បង្រួម (Zoom out)"
-                >
-                  <ZoomOut size={18} />
-                </button>
+                {/* View Mode Switcher (PDF Iframe vs Image Preview) */}
+                <div className="lightbox-mode-toggle">
+                  <button
+                    type="button"
+                    className={`lightbox-mode-btn ${viewMode === "pdf" ? "active" : ""}`}
+                    onClick={() => setViewMode("pdf")}
+                    title="អានជាឯកសារ PDF ពេញ"
+                  >
+                    <FileText size={13} />
+                    <span>PDF Reader</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`lightbox-mode-btn ${viewMode === "image" ? "active" : ""}`}
+                    onClick={() => setViewMode("image")}
+                    title="មើលជារូបភាព"
+                  >
+                    <ImageIcon size={13} />
+                    <span>រូបភាព</span>
+                  </button>
+                </div>
+
+                {viewMode === "image" && (
+                  <>
+                    <button
+                      type="button"
+                      className="lightbox-tool-btn"
+                      onClick={() => setZoomLevel((z) => Math.min(z + 0.3, 3))}
+                      title="ពង្រីក (Zoom in)"
+                    >
+                      <ZoomIn size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      className="lightbox-tool-btn"
+                      onClick={() => setZoomLevel((z) => Math.max(z - 0.3, 0.7))}
+                      title="បង្រួម (Zoom out)"
+                    >
+                      <ZoomOut size={18} />
+                    </button>
+                  </>
+                )}
+
                 <a
                   href={activeExercise.driveUrl}
                   target="_blank"
@@ -273,6 +331,7 @@ export function ExerciseSection({
                 >
                   <ExternalLink size={18} />
                 </a>
+
                 <button
                   type="button"
                   className="lightbox-tool-btn lightbox-close-btn"
@@ -284,20 +343,29 @@ export function ExerciseSection({
               </div>
             </div>
 
-            {/* Image Viewer Container */}
-            <div className="lightbox-content">
-              <div className="lightbox-image-wrap">
-                <img
-                  src={activeExercise.renderUrl}
-                  alt={activeExercise.titleKh}
-                  className="lightbox-image"
-                  style={{
-                    transform: `scale(${zoomLevel})`,
-                    transition: "transform 0.2s ease-out",
-                  }}
-                  referrerPolicy="no-referrer"
+            {/* Viewer Content Area */}
+            <div className="lightbox-content" style={{ padding: viewMode === "pdf" ? "0.5rem" : "1.5rem" }}>
+              {viewMode === "pdf" ? (
+                <iframe
+                  src={`https://drive.google.com/file/d/${activeExercise.driveFileId}/preview`}
+                  className="exercise-pdf-iframe"
+                  title={activeExercise.titleKh}
+                  allow="autoplay"
                 />
-              </div>
+              ) : (
+                <div className="lightbox-image-wrap">
+                  <img
+                    src={activeExercise.renderUrl}
+                    alt={activeExercise.titleKh}
+                    className="lightbox-image"
+                    style={{
+                      transform: `scale(${zoomLevel})`,
+                      transition: "transform 0.2s ease-out",
+                    }}
+                    referrerPolicy="no-referrer"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Footer with actions and navigation */}
@@ -323,7 +391,19 @@ export function ExerciseSection({
                   បន្ទាប់ →
                 </button>
               </div>
+
               <div className="lightbox-actions-right">
+                <a
+                  href={activeExercise.driveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="button button-outline button-small"
+                  style={{ color: "#1240ab", borderColor: "#ccd5e5" }}
+                >
+                  <Download size={14} />
+                  <span>ទាញយក / បើកពេញ ↗</span>
+                </a>
+
                 {activeExercise.solutionUrl && (
                   <a
                     href={activeExercise.solutionUrl}
@@ -335,6 +415,7 @@ export function ExerciseSection({
                     <span>មើលចម្លើយ</span>
                   </a>
                 )}
+
                 {telegramUrl && (
                   <a
                     href={telegramUrl}

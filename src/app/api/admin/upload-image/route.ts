@@ -3,10 +3,11 @@ import { auth } from "@/auth";
 import { isGoogleDriveConfigured, uploadImageToGoogleDrive } from "@/lib/google-drive";
 import { prisma } from "@/lib/prisma";
 
-// Maximum upload file size (20 MB)
-const MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+// Maximum upload file size (50 MB)
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { error: "សូមជ្រើសរើសឯកសាររូបភាពដើម្បីផ្ទុកឡើង។ (No file provided)" },
+        { error: "សូមជ្រើសរើសឯកសាររូបភាព ឬ PDF ដើម្បីផ្ទុកឡើង។ (No file provided)" },
         { status: 400 }
       );
     }
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_MIME_TYPES.has(file.type)) {
       return NextResponse.json(
         {
-          error: `ប្រភេទឯកសារមិនត្រឹមត្រូវ (${file.type})។ អនុញ្ញាតតែរូបភាព JPG, PNG, WEBP, GIF, SVG ប៉ុណ្ណោះ។`,
+          error: `ប្រភេទឯកសារមិនត្រឹមត្រូវ (${file.type})។ អនុញ្ញាតតែរូបភាព JPG, PNG, WEBP, GIF, SVG និងឯកសារ PDF ប៉ុណ្ណោះ។`,
         },
         { status: 400 }
       );
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
     // 5. Validate file size
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return NextResponse.json(
-        { error: "ទំហំរូបភាពធំពេក (លើសពី 20MB)។ សូមបន្ថយទំហំរូបភាពមុនផ្ទុកឡើង។" },
+        { error: "ទំហំឯកសារធំពេក (លើសពី 50MB)។ សូមបន្ថយទំហំឯកសារមុនផ្ទុកឡើង។" },
         { status: 400 }
       );
     }
@@ -105,6 +106,8 @@ export async function POST(request: NextRequest) {
       driveUrl: uploadResult.driveUrl,
       renderUrl: uploadResult.renderUrl,
       fileName: uploadResult.fileName,
+      mimeType: file.type,
+      isPdf: file.type === "application/pdf",
       sizeBytes: uploadResult.sizeBytes,
     });
   } catch (error) {

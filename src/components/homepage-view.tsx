@@ -20,6 +20,8 @@ export type HomepageViewProps = {
     addressKh: string | null;
     hoursKh: string | null;
     footerTextKh: string | null;
+    seoTitleKh?: string | null;
+    seoDescriptionKh?: string | null;
   };
   subjects: { id: string; icon: string; nameKh: string; descriptionKh: string }[];
   testimonials: { id: string; nameKh: string; roleKh: string | null; quoteKh: string; rating: number }[];
