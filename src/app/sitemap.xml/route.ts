@@ -48,17 +48,62 @@ export async function GET() {
 
   const logoUrl = settings.logoRenderUrl || ensureAbsoluteUrl("/logo.jpg", baseUrl);
 
-  const exerciseImages = exercises
-    .map((ex) => (ex.renderUrl.startsWith("http") ? ex.renderUrl : ensureAbsoluteUrl(ex.renderUrl, baseUrl)))
-    .filter(Boolean);
+  type ImageEntry = { loc: string; title?: string; caption?: string };
+  const imageEntries: ImageEntry[] = [];
 
-  const videoThumbnails = videos
-    .map((v) => v.thumbUrl || getYouTubeThumbnail(v.youtubeId))
-    .filter(Boolean);
+  if (logoUrl) {
+    imageEntries.push({
+      loc: logoUrl,
+      title: "DR.MATHS Education Center Logo",
+      caption: "DR.MATHS Education Center - Founder Korm Sambath (លោកគ្រូ គរ សម្បត្តិ)",
+    });
+  }
 
-  const allImages = Array.from(
-    new Set([logoUrl, heroImageUrl, aboutImageUrl, ...exerciseImages, ...videoThumbnails])
-  );
+  if (heroImageUrl) {
+    imageEntries.push({
+      loc: heroImageUrl,
+      title: "DR.MATHS Education Center | លោកគ្រូ គរ សម្បត្តិ (Korm Sambath)",
+      caption: "ថ្នាក់បង្រៀនគណិតវិទ្យា និងវិទ្យាសាស្ត្រ DR.MATHS",
+    });
+  }
+
+  if (aboutImageUrl) {
+    imageEntries.push({
+      loc: aboutImageUrl,
+      title: "អំពី DR.MATHS Education Center",
+      caption: "ស្គាល់ពីទស្សនវិស័យ និងបេសកកម្មរបស់ DR.MATHS",
+    });
+  }
+
+  exercises.forEach((ex) => {
+    const exUrl = ex.renderUrl.startsWith("http") ? ex.renderUrl : ensureAbsoluteUrl(ex.renderUrl, baseUrl);
+    if (exUrl) {
+      imageEntries.push({
+        loc: exUrl,
+        title: `${ex.titleKh} | លោកគ្រូ គរ សម្បត្តិ (Korm Sambath)`,
+        caption: ex.descriptionKh || `${ex.subjectKh ?? "គណិតវិទ្យា"} ${ex.gradeKh ?? ""}`,
+      });
+    }
+  });
+
+  videos.forEach((v) => {
+    const thumb = v.thumbUrl || getYouTubeThumbnail(v.youtubeId);
+    if (thumb) {
+      imageEntries.push({
+        loc: thumb,
+        title: `${v.titleKh} (Thumbnail)`,
+        caption: `វីដេអូមេរៀន ${v.seriesKh ?? "DR.MATHS"}`,
+      });
+    }
+  });
+
+  // Deduplicate by loc
+  const seenLocs = new Set<string>();
+  const uniqueImages = imageEntries.filter((img) => {
+    if (seenLocs.has(img.loc)) return false;
+    seenLocs.add(img.loc);
+    return true;
+  });
 
   let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
@@ -68,10 +113,12 @@ export async function GET() {
   xml += `    <changefreq>daily</changefreq>\n`;
   xml += `    <priority>1.0</priority>\n`;
 
-  // Render all Google image sitemap entries
-  for (const imgUrl of allImages) {
+  // Render all Google image sitemap entries with rich titles
+  for (const img of uniqueImages) {
     xml += `    <image:image>\n`;
-    xml += `      <image:loc>${escapeXml(imgUrl)}</image:loc>\n`;
+    xml += `      <image:loc>${escapeXml(img.loc)}</image:loc>\n`;
+    if (img.title) xml += `      <image:title>${escapeXml(img.title)}</image:title>\n`;
+    if (img.caption) xml += `      <image:caption>${escapeXml(img.caption)}</image:caption>\n`;
     xml += `    </image:image>\n`;
   }
 
