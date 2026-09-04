@@ -13,6 +13,7 @@ const SHEET_NAMES = [
   "Settings",
   "MediaAssets",
   "AdminUsers",
+  "Posts",
 ] as const;
 
 type SheetName = (typeof SHEET_NAMES)[number];
@@ -418,8 +419,47 @@ export async function syncAdminUsersToSheet() {
   }
 }
 
+export async function syncPostsToSheet() {
+  try {
+    const posts = await withDbRetry(() => prisma.post.findMany({ orderBy: { order: "asc" } }));
+    const headers = [
+      "id",
+      "titleKh",
+      "badgeKh",
+      "contentKh",
+      "driveUrl",
+      "driveFileId",
+      "renderUrl",
+      "actionUrl",
+      "actionLabel",
+      "order",
+      "published",
+      "featured",
+      "updatedAt",
+    ];
+    const rows = posts.map((p) => [
+      p.id,
+      p.titleKh,
+      p.badgeKh || "",
+      p.contentKh,
+      p.driveUrl || "",
+      p.driveFileId || "",
+      p.renderUrl || "",
+      p.actionUrl || "",
+      p.actionLabel || "",
+      p.order,
+      p.published,
+      p.featured,
+      p.updatedAt.toISOString(),
+    ]);
+    await overwriteSheetTab("Posts", headers, rows);
+  } catch (err) {
+    console.warn("[syncPostsToSheet] skipped due to error:", err);
+  }
+}
+
 /**
- * Triggers a full synchronization of all 8 data tables from PostgreSQL to Google Sheets.
+ * Triggers a full synchronization of all 9 data tables from PostgreSQL to Google Sheets.
  */
 export async function syncAllToGoogleSheets(): Promise<{ success: boolean; spreadsheetId?: string; error?: string }> {
   try {
@@ -436,6 +476,7 @@ export async function syncAllToGoogleSheets(): Promise<{ success: boolean; sprea
     await syncSettingsToSheet();
     await syncMediaAssetsToSheet();
     await syncAdminUsersToSheet();
+    await syncPostsToSheet();
 
     return { success: true, spreadsheetId };
   } catch (error: unknown) {
@@ -483,14 +524,34 @@ async function readSheetTab(sheetName: SheetName): Promise<Record<string, string
 
 export async function fetchAllFromGoogleSheets() {
   try {
-    const [exercisesRaw, contentsRaw, videosRaw, subjectsRaw, testimonialsRaw, settingsRaw] = await Promise.all([
+    const [exercisesRaw, contentsRaw, videosRaw, subjectsRaw, testimonialsRaw, settingsRaw, postsRaw] = await Promise.all([
       readSheetTab("Exercises"),
       readSheetTab("SiteContent"),
       readSheetTab("Videos"),
       readSheetTab("Subjects"),
       readSheetTab("Testimonials"),
       readSheetTab("Settings"),
+      readSheetTab("Posts"),
     ]);
+
+    const posts = (postsRaw || [])
+      .filter((r) => r.id && r.titleKh)
+      .map((r) => ({
+        id: r.id,
+        titleKh: r.titleKh,
+        badgeKh: r.badgeKh || "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+        contentKh: r.contentKh || "",
+        driveUrl: r.driveUrl || null,
+        driveFileId: r.driveFileId || null,
+        renderUrl: r.renderUrl || null,
+        actionUrl: r.actionUrl || null,
+        actionLabel: r.actionLabel || "ទំនាក់ទំនងតាម Telegram",
+        order: Number(r.order) || 0,
+        published: r.published === "TRUE" || r.published === "true" || r.published === "1",
+        featured: r.featured === "TRUE" || r.featured === "true",
+        createdAt: new Date(),
+        updatedAt: r.updatedAt ? new Date(r.updatedAt) : new Date(),
+      }));
 
     const exercises = exercisesRaw
       .filter((r) => r.id && r.titleKh)
@@ -602,6 +663,7 @@ export async function fetchAllFromGoogleSheets() {
       subjects,
       testimonials,
       settings,
+      posts,
     };
   } catch (err) {
     console.error("[fetchAllFromGoogleSheets error]", err);

@@ -16,6 +16,7 @@ import {
   syncSubjectsToSheet,
   syncTestimonialsToSheet,
   syncSettingsToSheet,
+  syncPostsToSheet,
   syncAllToGoogleSheets,
 } from "@/lib/google-sheets";
 
@@ -513,5 +514,96 @@ export async function syncAllToGoogleSheetsAction() {
   refreshPublic();
   revalidatePath("/admin");
   redirect("/admin?success=sheets_synced");
+}
+
+const postSchema = z.object({
+  id: z.string().optional(),
+  titleKh: z.string().min(2).max(250),
+  badgeKh: z.string().max(100).optional(),
+  contentKh: z.string().min(5),
+  driveUrl: z.string().optional(),
+  actionUrl: z.string().optional(),
+  actionLabel: z.string().max(150).optional(),
+  order: z.coerce.number().int().min(0).max(9999),
+  published: z.boolean(),
+  featured: z.boolean(),
+});
+
+export async function savePostAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = postSchema.safeParse({
+    id: String(formData.get("id") ?? "") || undefined,
+    titleKh: String(formData.get("titleKh") ?? "").trim(),
+    badgeKh: String(formData.get("badgeKh") ?? "").trim() || undefined,
+    contentKh: String(formData.get("contentKh") ?? "").trim(),
+    driveUrl: String(formData.get("driveUrl") ?? "").trim() || undefined,
+    actionUrl: String(formData.get("actionUrl") ?? "").trim() || undefined,
+    actionLabel: String(formData.get("actionLabel") ?? "").trim() || undefined,
+    order: String(formData.get("order") ?? "0"),
+    published: formData.get("published") === "on",
+    featured: formData.get("featured") === "on",
+  });
+  if (!parsed.success) redirect("/admin/posts?error=invalid");
+
+  let driveImg = null;
+  if (parsed.data.driveUrl) {
+    driveImg = getDriveImage(parsed.data.driveUrl);
+    if (!driveImg) redirect("/admin/posts?error=invalid_drive");
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const data = {
+        titleKh: parsed.data.titleKh,
+        badgeKh: parsed.data.badgeKh ?? "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+        contentKh: parsed.data.contentKh,
+        driveUrl: driveImg ? driveImg.originalUrl : null,
+        driveFileId: driveImg ? driveImg.fileId : null,
+        renderUrl: driveImg ? driveImg.renderUrl : null,
+        actionUrl: parsed.data.actionUrl ?? null,
+        actionLabel: parsed.data.actionLabel ?? "ទំនាក់ទំនងតាម Telegram",
+        order: parsed.data.order,
+        published: parsed.data.published,
+        featured: parsed.data.featured,
+      };
+
+      if (parsed.data.id) {
+        await tx.post.update({ where: { id: parsed.data.id }, data });
+      } else {
+        await tx.post.create({ data });
+      }
+
+      if (driveImg) {
+        await tx.mediaAsset.upsert({
+          where: { driveUrl: driveImg.originalUrl },
+          update: { driveFileId: driveImg.fileId, renderUrl: driveImg.renderUrl, validationState: "valid" },
+          create: { driveUrl: driveImg.originalUrl, driveFileId: driveImg.fileId, renderUrl: driveImg.renderUrl, category: "post" },
+        });
+      }
+    });
+  } catch (error) {
+    console.error("[savePostAction]", error);
+    redirect("/admin/posts?error=save");
+  }
+
+  refreshPublic();
+  revalidatePath("/admin/posts");
+  syncPostsToSheet().catch(console.warn);
+  redirect("/admin/posts?success=saved");
+}
+
+export async function deletePostAction(formData: FormData) {
+  await requireAdmin();
+  const id = z.string().min(1).parse(formData.get("id"));
+  try {
+    await prisma.post.deleteMany({ where: { id } });
+  } catch (error) {
+    console.error("[deletePostAction]", error);
+    redirect("/admin/posts?error=delete");
+  }
+  refreshPublic();
+  revalidatePath("/admin/posts");
+  syncPostsToSheet().catch(console.warn);
+  redirect("/admin/posts?success=deleted");
 }
 

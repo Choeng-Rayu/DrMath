@@ -11,11 +11,12 @@ type AdminDashboardProps = {
 
 export default async function AdminDashboard({ searchParams }: AdminDashboardProps) {
   const { error, success } = await searchParams;
-  const { subjects, testimonials, videos, exercises } = await getAdminData();
+  const { subjects, testimonials, videos, exercises, posts } = await getAdminData();
   const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID;
   const spreadsheetUrl = spreadsheetId ? `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit` : null;
 
   const metrics = [
+    [posts.length, "ដំណឹង & ការផ្សាយ", "/admin/posts"],
     [videos.length, "វីដេអូសរុប", "/admin/videos"],
     [exercises.length, "លំហាត់ & វិញ្ញាសា", "/admin/exercises"],
     [subjects.length, "មុខវិជ្ជា", "/admin/subjects"],
@@ -111,7 +112,10 @@ export default async function AdminDashboard({ searchParams }: AdminDashboardPro
           កែអក្សរ លេខទំនាក់ទំនង និងតំណ Google Drive ក្នុងផ្ទាំងខ្លឹមសារ។ បន្ថែមវីដេអូ និងលំហាត់/វិញ្ញាសាពី Google Drive ហើយផ្សាយទៅកាន់គេហទំព័រសាធារណៈ។
         </p>
         <div className="hero-actions">
-          <Link className="button button-primary button-small" href="/admin/content">
+          <Link className="button button-primary button-small" href="/admin/posts">
+            + ផ្សាយដំណឹងថ្មី
+          </Link>
+          <Link className="button button-secondary button-small" href="/admin/content">
             កែខ្លឹមសារ
           </Link>
           <Link className="button button-secondary button-small" href="/admin/exercises">

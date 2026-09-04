@@ -8,6 +8,7 @@ export function StructuredData({
   subjects = [],
   videos = [],
   exercises = [],
+  posts = [],
 }: HomepageViewProps) {
   const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://drmaths.online").replace(/\/$/, "");
 
@@ -140,6 +141,27 @@ export function StructuredData({
       author: {
         "@id": `${baseUrl}/#founder`,
       },
+    })),
+
+    // 7. Job Announcements / Teacher Recruitment
+    ...posts.filter((post) => post.titleKh.includes("ជ្រើសរើស")).map((post) => ({
+      "@type": "JobPosting",
+      "@id": `${baseUrl}/#job-${post.id}`,
+      title: post.titleKh,
+      description: post.contentKh,
+      datePosted: new Date(post.createdAt).toISOString(),
+      hiringOrganization: {
+        "@id": `${baseUrl}/#organization`,
+      },
+      jobLocation: {
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "KH",
+          addressLocality: "Phnom Penh",
+        },
+      },
+      employmentType: "FULL_TIME",
     })),
   ];
 

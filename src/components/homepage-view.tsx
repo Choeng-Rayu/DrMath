@@ -1,7 +1,8 @@
 import { BookOpen, Clock, ExternalLink, MapPin, Phone, Send, Sparkles } from "lucide-react";
 import { NavMenu } from "@/components/nav-menu";
 import { ExerciseSection, type ExerciseItem } from "@/components/exercise-section";
-import type { ContentMap } from "@/lib/site";
+import { AnnouncementSection } from "@/components/announcement-section";
+import type { ContentMap, PostItem } from "@/lib/site";
 import { getDriveImage } from "@/lib/drive";
 import { renderRichText, plain } from "@/lib/text";
 import { getYouTubeEmbed } from "@/lib/youtube";
@@ -9,6 +10,7 @@ import { getYouTubeEmbed } from "@/lib/youtube";
 export type HomepageViewProps = {
   content: ContentMap;
   hiddenKeys?: string[];
+  posts?: PostItem[];
   settings: {
     phones: string[];
     telegramUrl: string | null;
@@ -36,13 +38,14 @@ function external(url: string | null | undefined) {
 // Renders the public homepage from a data snapshot. Every CMS-managed element
 // carries data-cms-key so /preview's client bridge can live-edit it, and
 // data-cms-hidden hides rows the admin turned off.
-export function HomepageView({ content, hiddenKeys = [], settings, subjects, testimonials, videos, exercises = [] }: HomepageViewProps) {
+export function HomepageView({ content, hiddenKeys = [], settings, subjects, testimonials, videos, exercises = [], posts = [] }: HomepageViewProps) {
   const isHidden = (key: string) => hiddenKeys.includes(key);
   const hidden = (key: string) => (isHidden(key) ? { "data-cms-hidden": "true" } : {});
 
   const heroImage = getDriveImage(content["hero.imageDriveUrl"] ?? "");
   const aboutImage = getDriveImage(content["about.imageDriveUrl"] ?? "");
   const featured = videos.find((video) => video.featured) ?? videos[0];
+  const featuredPost = posts.find((p) => p.featured) ?? posts[0];
   const formats = [1, 2, 3].map((number) => ({
     num: number,
     number: `0${number}`,
@@ -54,6 +57,16 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
     title: content[`highlights.${number}.title`],
     text: content[`highlights.${number}.text`],
   }));
+
+  const navLinks = [
+    { href: "#home", label: content["nav.home"], cmsKey: "nav.home" },
+    ...(posts.length > 0 ? [{ href: "#announcements", label: content["nav.posts"] ?? "ដំណឹងថ្មីៗ", cmsKey: "nav.posts" }] : []),
+    { href: "#about", label: content["nav.about"], cmsKey: "nav.about" },
+    { href: "#subjects", label: content["nav.subjects"], cmsKey: "nav.subjects" },
+    { href: "#videos", label: content["nav.videos"], cmsKey: "nav.videos" },
+    { href: "#exercises", label: content["nav.exercises"] ?? "លំហាត់", cmsKey: "nav.exercises" },
+    { href: "#contact", label: content["nav.contact"], cmsKey: "nav.contact" },
+  ];
 
   return (
     <main className="site-shell">
@@ -81,14 +94,7 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
             <span>DR.MATHS</span>
           </a>
           <NavMenu
-            links={[
-              { href: "#home", label: content["nav.home"], cmsKey: "nav.home" },
-              { href: "#about", label: content["nav.about"], cmsKey: "nav.about" },
-              { href: "#subjects", label: content["nav.subjects"], cmsKey: "nav.subjects" },
-              { href: "#videos", label: content["nav.videos"], cmsKey: "nav.videos" },
-              { href: "#exercises", label: content["nav.exercises"] ?? "លំហាត់", cmsKey: "nav.exercises" },
-              { href: "#contact", label: content["nav.contact"], cmsKey: "nav.contact" },
-            ]}
+            links={navLinks}
             ctaLabel={content["nav.cta"]}
             ctaHref={content["nav.ctaUrl"]}
             hiddenKeys={hiddenKeys}
@@ -99,6 +105,34 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
       <section id="home" data-cms-section="hero" className="hero paper-grid">
         <div className="container hero-grid">
           <div>
+            {featuredPost && (
+              <a
+                href="#announcements"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: ".45rem",
+                  background: "#fff",
+                  border: "1px solid #fde68a",
+                  padding: ".32rem .85rem",
+                  borderRadius: "20px",
+                  fontSize: ".82rem",
+                  fontWeight: 700,
+                  color: "#b45309",
+                  marginBottom: ".75rem",
+                  boxShadow: "0 2px 8px rgba(255,183,3,.15)",
+                  maxWidth: "100%",
+                }}
+              >
+                <span className="pulse-dot" style={{ width: 7, height: 7, flexShrink: 0 }} />
+                <span>
+                  {featuredPost.badgeKh && featuredPost.badgeKh !== featuredPost.titleKh
+                    ? `${featuredPost.badgeKh}៖ ${featuredPost.titleKh}`
+                    : featuredPost.titleKh}
+                </span>
+                <span style={{ color: "var(--blue)", marginLeft: ".25rem", whiteSpace: "nowrap" }}>មើលលម្អិត ↓</span>
+              </a>
+            )}
             <p className="eyebrow" data-cms-key="hero.eyebrow">{content["hero.eyebrow"]}</p>
             <h1
               className="display"
@@ -150,6 +184,14 @@ export function HomepageView({ content, hiddenKeys = [], settings, subjects, tes
           </div>
         </div>
       </section>
+
+      <AnnouncementSection
+        posts={posts}
+        eyebrow={content["posts.eyebrow"]}
+        title={content["posts.title"]}
+        description={content["posts.description"]}
+        telegramUrl={settings.telegramUrl}
+      />
 
       <section id="stats" data-cms-section="stats" className="stats" aria-label="ស្ថិតិ DR.MATHS">
         <div className="container stats-grid">

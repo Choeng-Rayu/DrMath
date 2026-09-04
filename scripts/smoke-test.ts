@@ -40,5 +40,11 @@ const driveConfig = isGoogleDriveConfigured();
 assert.equal(typeof driveConfig.configured, "boolean");
 assert.ok(Array.isArray(driveConfig.missing));
 
+import { fallbackPosts, getSiteData } from "../src/lib/site";
+assert.ok(fallbackPosts.length > 0, "Fallback posts must not be empty");
+assert.ok(fallbackPosts[0].titleKh.includes("ដំណឹងជ្រើសរើសគ្រូឆ្នើម"), "Fallback post must have recruitment title");
+assert.ok(fallbackPosts[0].contentKh.includes("គ្រូគណិតវិទ្យា"), "Fallback post must include math teacher");
+assert.equal(fallbackPosts[0].featured, true, "Recruitment post must be featured");
+
 console.log("All CMS, Drive, and Preview smoke tests passed successfully.");
 

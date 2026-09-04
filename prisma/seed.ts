@@ -114,6 +114,31 @@ async function main() {
     });
   }
 
+  const postCount = await prisma.post.count();
+  if (!postCount) {
+    await prisma.post.create({
+      data: {
+        titleKh: "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+        badgeKh: "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+        contentKh: `សាលាបង្រៀនគួរគណិតវិទ្យាDR.MATHS ត្រូវការជ្រើសរើសរើសគ្រូបង្រៀនឆ្នើមសម្រាប់បង្រៀនសិស្សពីថ្នាក់ទី៣ ដល់ទី១២ តាមមុខវិជ្ជាដូចតទៅ:
+1. គ្រូគណិតវិទ្យា៥នាក់
+2. គ្រូរូបវិទ្យា៥នាក់
+3. គ្រូគីមីវិទ្យា៥នាក់
+4. គ្រូភាសាខ្មែរ៥នាក់
+
+🅰️ លក្ខខណ្ឌជ្រើសរើស: មានបរិញ្ញាបត្រ និងបទពិសោធន៍បង្រៀន២ឆ្នាំ។
+🅰️ ចាប់អារម្មណ៍ សូមទំនាក់ទំនងមកកាន់Telegram:@sambathkorm
+
+#drmathseducationcenter #foryoupage`,
+        actionUrl: "https://t.me/sambathkorm",
+        actionLabel: "ទំនាក់ទំនងដាក់ពាក្យតាម Telegram (@sambathkorm)",
+        featured: true,
+        order: 1,
+        published: true,
+      },
+    });
+  }
+
   const email = process.env.ADMIN_EMAIL?.toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   if (email && password) {

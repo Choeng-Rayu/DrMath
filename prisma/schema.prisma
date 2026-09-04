@@ -139,3 +139,23 @@ model Exercise {
   @@index([subjectKh])
 }
 
+model Post {
+  id          String   @id @default(cuid())
+  titleKh     String
+  badgeKh     String?  @default("ដំណឹងជ្រើសរើស")
+  contentKh   String   @db.Text
+  driveUrl    String?  @db.Text
+  driveFileId String?
+  renderUrl   String?  @db.Text
+  actionUrl   String?  @db.Text
+  actionLabel String?  @default("ទំនាក់ទំនងតាម Telegram")
+  featured    Boolean  @default(true)
+  order       Int      @default(0)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, order])
+  @@index([featured])
+}
+

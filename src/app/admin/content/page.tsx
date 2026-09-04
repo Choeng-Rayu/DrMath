@@ -8,6 +8,7 @@ import { getAdminData } from "@/lib/site";
 
 const sectionNames: Record<string, string> = {
   nav: "របារម៉ឺនុយ និងប៊ូតុង",
+  posts: "ដំណឹង & ការផ្សាយ",
   hero: "ផ្នែកដំបូង",
   stats: "ស្ថិតិ",
   about: "អំពីយើង",
@@ -22,6 +23,7 @@ const sectionNames: Record<string, string> = {
 
 const labels: Record<string, string> = {
   "nav.home": "ម៉ឺនុយ៖ ទំព័រដើម",
+  "nav.posts": "ម៉ឺនុយ៖ ដំណឹងថ្មីៗ",
   "nav.about": "ម៉ឺនុយ៖ អំពីយើង",
   "nav.subjects": "ម៉ឺនុយ៖ មុខវិជ្ជា",
   "nav.videos": "ម៉ឺនុយ៖ វីដេអូ",
@@ -29,6 +31,9 @@ const labels: Record<string, string> = {
   "nav.contact": "ម៉ឺនុយ៖ ទំនាក់ទំនង",
   "nav.cta": "ប៊ូតុងចុះឈ្មោះ",
   "nav.ctaUrl": "តំណប៊ូតុងចុះឈ្មោះ",
+  "posts.eyebrow": "ដំណឹង៖ អក្សរខាងលើ",
+  "posts.title": "ដំណឹង៖ ចំណងជើងផ្នែក",
+  "posts.description": "ដំណឹង៖ ការពិពណ៌នាផ្នែក",
   "hero.eyebrow": "អក្សរខាងលើ",
   "hero.title": "ចំណងជើងធំ",
   "hero.description": "ពិពណ៌នា",

@@ -4,15 +4,36 @@ import { prisma, withDbRetry } from "@/lib/prisma";
 
 export type ContentMap = Record<string, string>;
 
+export type PostItem = {
+  id: string;
+  titleKh: string;
+  badgeKh: string | null;
+  contentKh: string;
+  driveUrl: string | null;
+  driveFileId: string | null;
+  renderUrl: string | null;
+  actionUrl: string | null;
+  actionLabel: string | null;
+  featured: boolean;
+  order: number;
+  published: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export const fallbackContent: ContentMap = {
   "nav.home": "ទំព័រដើម",
   "nav.about": "អំពីយើង",
+  "nav.posts": "ដំណឹងថ្មីៗ",
   "nav.subjects": "មុខវិជ្ជា",
   "nav.videos": "វីដេអូ",
   "nav.exercises": "លំហាត់",
   "nav.contact": "ទំនាក់ទំនង",
   "nav.cta": "ចុះឈ្មោះរៀន",
   "nav.ctaUrl": "https://t.me/sambathkorm",
+  "posts.eyebrow": "ដំណឹង & ការផ្សាយ",
+  "posts.title": "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+  "posts.description": "ព័ត៌មាន និងការជ្រើសរើសគ្រូបង្រៀនរបស់សាលាបង្រៀនគួរគណិតវិទ្យា DR.MATHS។",
   "hero.eyebrow": "DR.MATHS EDUCATION CENTER",
   "hero.title": "មួយជំហានជាមួយ <strong>DR.MATHS</strong> = មួយជំហានជាមួយ ABC",
   "hero.description": "រៀនឱ្យយល់ច្បាស់ ពង្រឹងមូលដ្ឋាន និងឈានទៅរកលទ្ធផលដែលអ្នកស្រមៃ។",
@@ -89,6 +110,34 @@ const fallbackExercises = [
   },
 ];
 
+export const fallbackPosts: PostItem[] = [
+  {
+    id: "post-recruitment-1",
+    titleKh: "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+    badgeKh: "ដំណឹងជ្រើសរើសគ្រូឆ្នើម",
+    contentKh: `សាលាបង្រៀនគួរគណិតវិទ្យាDR.MATHS ត្រូវការជ្រើសរើសរើសគ្រូបង្រៀនឆ្នើមសម្រាប់បង្រៀនសិស្សពីថ្នាក់ទី៣ ដល់ទី១២ តាមមុខវិជ្ជាដូចតទៅ:
+1. គ្រូគណិតវិទ្យា៥នាក់
+2. គ្រូរូបវិទ្យា៥នាក់
+3. គ្រូគីមីវិទ្យា៥នាក់
+4. គ្រូភាសាខ្មែរ៥នាក់
+
+🅰️ លក្ខខណ្ឌជ្រើសរើស: មានបរិញ្ញាបត្រ និងបទពិសោធន៍បង្រៀន២ឆ្នាំ។
+🅰️ ចាប់អារម្មណ៍ សូមទំនាក់ទំនងមកកាន់Telegram:@sambathkorm
+
+#drmathseducationcenter #foryoupage`,
+    driveUrl: null,
+    driveFileId: null,
+    renderUrl: null,
+    actionUrl: "https://t.me/sambathkorm",
+    actionLabel: "ទំនាក់ទំនងដាក់ពាក្យតាម Telegram (@sambathkorm)",
+    featured: true,
+    order: 1,
+    published: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
 const fallbackSubjects = [
   { id: "math", icon: "∑", nameKh: "គណិតវិទ្យា", descriptionKh: "បង្កើតមូលដ្ឋានរឹងមាំ និងដោះស្រាយលំហាត់ដោយទំនុកចិត្ត។", order: 1, visible: true },
   { id: "physics", icon: "⚛", nameKh: "រូបវិទ្យា", descriptionKh: "យល់ពីគោលការណ៍ និងអនុវត្តតាមលំហាត់ជាក់ស្តែង។", order: 2, visible: true },
@@ -126,13 +175,14 @@ export const getSiteData = cache(async function getSiteData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contentRows, settings, subjects, testimonials, videos, exercises] = await Promise.all([
+      const [contentRows, settings, subjects, testimonials, videos, exercises, posts] = await Promise.all([
         prisma.siteContent.findMany(),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.video.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
         prisma.exercise.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
+        prisma.post.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
       ]);
 
       const content = { ...fallbackContent, ...Object.fromEntries(contentRows.map((row) => [row.key, row.value])) };
@@ -148,6 +198,7 @@ export const getSiteData = cache(async function getSiteData() {
         testimonials: testimonials.length ? testimonials : fallbackTestimonials,
         videos,
         exercises: exercises.length ? exercises : fallbackExercises,
+        posts: posts.length ? posts : fallbackPosts,
       };
     });
   } catch (error) {
@@ -164,6 +215,7 @@ export const getSiteData = cache(async function getSiteData() {
         const visibleTestimonials = sheetData.testimonials.filter((t) => t.visible);
         const publishedVideos = sheetData.videos.filter((v) => v.published);
         const publishedExercises = sheetData.exercises.filter((e) => e.published);
+        const publishedPosts = (sheetData.posts || []).filter((p) => p.published);
 
         console.log("✓ [getSiteData] Successfully loaded data from Google Sheets failover!");
         return {
@@ -174,6 +226,7 @@ export const getSiteData = cache(async function getSiteData() {
           testimonials: visibleTestimonials.length ? visibleTestimonials : fallbackTestimonials,
           videos: publishedVideos,
           exercises: publishedExercises.length ? publishedExercises : fallbackExercises,
+          posts: publishedPosts.length ? publishedPosts : fallbackPosts,
         };
       }
     } catch (sheetErr) {
@@ -188,6 +241,7 @@ export const getSiteData = cache(async function getSiteData() {
       testimonials: fallbackTestimonials,
       videos: [],
       exercises: fallbackExercises,
+      posts: fallbackPosts,
     };
   }
 });
@@ -198,13 +252,14 @@ export const getPreviewData = cache(async function getPreviewData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contentRows, settings, subjects, testimonials, videos, exercises] = await Promise.all([
+      const [contentRows, settings, subjects, testimonials, videos, exercises, posts] = await Promise.all([
         prisma.siteContent.findMany(),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ where: { visible: true }, orderBy: { order: "asc" } }),
         prisma.video.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
         prisma.exercise.findMany({ where: { published: true }, orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
+        prisma.post.findMany({ orderBy: [{ featured: "desc" }, { order: "asc" }, { createdAt: "desc" }] }),
       ]);
 
       const content = { ...fallbackContent };
@@ -224,6 +279,7 @@ export const getPreviewData = cache(async function getPreviewData() {
         testimonials: testimonials.length ? testimonials : fallbackTestimonials,
         videos,
         exercises: exercises.length ? exercises : fallbackExercises,
+        posts: posts.length ? posts : fallbackPosts,
       };
     });
   } catch (error) {
@@ -244,6 +300,7 @@ export const getPreviewData = cache(async function getPreviewData() {
           testimonials: sheetData.testimonials.length ? sheetData.testimonials : fallbackTestimonials,
           videos: sheetData.videos,
           exercises: sheetData.exercises.length ? sheetData.exercises : fallbackExercises,
+          posts: sheetData.posts?.length ? sheetData.posts : fallbackPosts,
         };
       }
     } catch (sheetErr) {
@@ -258,6 +315,7 @@ export const getPreviewData = cache(async function getPreviewData() {
       testimonials: fallbackTestimonials,
       videos: [],
       exercises: fallbackExercises,
+      posts: fallbackPosts,
     };
   }
 });
@@ -266,15 +324,16 @@ export async function getAdminData() {
   noStore();
   try {
     return await withDbRetry(async () => {
-      const [contents, settings, subjects, testimonials, videos, exercises] = await Promise.all([
+      const [contents, settings, subjects, testimonials, videos, exercises, posts] = await Promise.all([
         prisma.siteContent.findMany({ orderBy: [{ section: "asc" }, { key: "asc" }] }),
         prisma.settings.findUnique({ where: { id: "site-settings" } }),
         prisma.subject.findMany({ orderBy: { order: "asc" } }),
         prisma.testimonial.findMany({ orderBy: { order: "asc" } }),
         prisma.video.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
         prisma.exercise.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
+        prisma.post.findMany({ orderBy: [{ order: "asc" }, { createdAt: "desc" }] }),
       ]);
-      return { contents, settings, subjects, testimonials, videos, exercises };
+      return { contents, settings, subjects, testimonials, videos, exercises, posts };
     });
   } catch (error) {
     console.warn("[getAdminData] Database unreachable. Attempting Google Sheets failover...", error);
@@ -286,7 +345,7 @@ export async function getAdminData() {
     } catch (sheetErr) {
       console.error("[getAdminData] Google Sheets failover error:", sheetErr);
     }
-    return { contents: [], settings: null, subjects: [], testimonials: [], videos: [], exercises: [] };
+    return { contents: [], settings: null, subjects: [], testimonials: [], videos: [], exercises: [], posts: [] as PostItem[] };
   }
 }
 

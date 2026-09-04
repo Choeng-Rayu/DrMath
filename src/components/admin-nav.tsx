@@ -12,6 +12,7 @@ type NavItem = {
 
 const links: NavItem[] = [
   { href: "/admin", label: "ផ្ទាំងគ្រប់គ្រង", exact: true },
+  { href: "/admin/posts", label: "ដំណឹង & ការផ្សាយ" },
   { href: "/admin/content", label: "កែខ្លឹមសារ" },
   { href: "/admin/videos", label: "វីដេអូ YouTube" },
   { href: "/admin/exercises", label: "លំហាត់ & វិញ្ញាសា" },
